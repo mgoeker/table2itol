@@ -709,28 +709,28 @@ Libreoffice or Openoffice ods files, respectively.
 
 IMPORTANT OPTIONS:
 
--i\tunless name of identifier column happens to match the default
--l\tunless the name of the label column happens to match the default
--s\tunless the separator character happens to match the default
--t\tfor modifying the identifier column (e.g. prepend something)
+-b\tOptional column that defines the background colour of the labels.
+-c\tConversion of integers to other data types: 'factor', 'double' or 'none'.
+-i\tUnless name of identifier column happens to match the default.
+-l\tUnless the name of the label column happens to match the default.
+-n\tThe sentinel(s) used to indicate missing values in input. Several may be
+  \tprovided, separated by the value of the '-s' option.
+-s\tUnless the separator character happens to match the default.
+-t\tTemplate for modifying the identifier column, e.g. prepending something.
 
-THE ROLE OF DATA TYPES:
+USE OF DATA TYPES:
 
-The kind of annotation file generated for each input table column depends on
-its data type, with character strings and logical vectors being treated as
-factors. Integer values can optionally be treated as factors, too, using
-'factor' as value of the 'conversion' argument, or as numbers that are not
-integers, using 'double'. The default, 'none', treats integers as such. The
-'na-strings' argument can contain several strings, separated by the
-'separator' argument.
+character, integer, logical -> factor -> iToL domains
+integer -> double -> iToL gradient
+integer -> iToL simplebar
 
 EXAMPLES:
 
-# if 'Genome_ID' contains integers:
-%prog -i Genome_ID -l Strain -b Phylum -t T%i annotation.tsv
+# set the most relevant relevant columns:
+'%prog -i Genome_ID -l Strain -b Phylum annotation.tsv'
 
-# to use 'Genome_ID' as-is:
-%prog -i Genome_ID -l Strain -b Phylum -t %s annotation.tsv
+# prepend 'T' to ID column 'Genome_ID', which contains integers:
+'%prog -i Genome_ID -l Strain -b Phylum -t T%i annotation.tsv'
 "
 )
 
