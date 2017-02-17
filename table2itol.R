@@ -52,6 +52,11 @@ create_itol_files <- function(infiles, opt) {
     "PL", "PR", "PU", "PD", "OC", "GP")
 
 
+  BLACK <- "#000000"
+
+  WHITE <- "#FFFFFF"
+
+
   # Colour vectors collected by Jan P. Meier-Kolthoff.
   #
   COLORS <- list(
@@ -272,7 +277,7 @@ create_itol_files <- function(infiles, opt) {
   #
   select_colours <- function(size, has.na) {
     if (has.na)
-      c(COLORS[[size - 1L]], "#FFFFFF")
+      c(COLORS[[size - 1L]], WHITE)
     else
       COLORS[[size]]
   }
@@ -368,6 +373,7 @@ create_itol_files <- function(infiles, opt) {
 
     product <- function(x, y) {
       cbind(rep(x = x, each = length(y)), rep.int(y, length(x)))
+      #cbind(rep.int(x, length(y)), rep(x = y, each = length(x)))
     }
 
     x <- addNA(x, TRUE)
@@ -379,7 +385,7 @@ create_itol_files <- function(infiles, opt) {
       outfile <- itol_filename(name, "text", outdir)
       print_itol_header(outfile, "DATASET_TEXT", base.annotation)
       # additional columns: position, color, style, size_factor, rotation
-      print_itol_data(outfile, ids, x, -1, "#000000", "normal", 0.75, 0)
+      print_itol_data(outfile, ids, x, -1, BLACK, "normal", 0.75, 0)
 
     } else if (length(symbols) || size > max.colors) {
 
@@ -405,16 +411,18 @@ create_itol_files <- function(infiles, opt) {
           }
           message(msg, sprintf(", trying %i/%i instead.", nsym, ncls))
         }
-        colors <- select_colours(ncls, anyNA(levels(x)))
+        colors <- select_colours(ncls, FALSE) # NA treated below
         symbols <- product(SYMBOLS, colors)
         colors <- symbols[, 2L]
+        if (anyNA(levels(x))) # ensure last selected position is white
+          colors[[size]] <- WHITE
         symbols <- symbols[, 1L]
       }
 
       annotation <- c(base.annotation, list(
         LEGEND_TITLE = nice_str(name),
         BACKBONE_HEIGHT = 0, # controls the height of the midline
-        BACKBONE_COLOR = "#ffffff", # controls the color of the midline
+        BACKBONE_COLOR = WHITE, # controls the color of the midline
         # we are hiding it by drawing it white
         SHOW_DOMAIN_LABELS = 0,
         WIDTH = 25,
@@ -459,13 +467,13 @@ create_itol_files <- function(infiles, opt) {
     annotation <- list(
       DATASET_LABEL = name,
       LEGEND_TITLE = nice_str(name),
-      LEGEND_COLORS = "#000000",
+      LEGEND_COLORS = BLACK,
       LEGEND_LABELS = paste0(sprintf("%s (%i)", c("Min.", "Max."),
         range(x, na.rm = TRUE)), collapse = " "),
       LEGEND_SHAPES = 1,
       WIDTH = 200,
       MARGIN = 5,
-      COLOR = "#000000"
+      COLOR = BLACK
     )
     print_itol_header(outfile, "DATASET_SIMPLEBAR", annotation)
     print_itol_data(outfile, ids, x)
@@ -480,14 +488,14 @@ create_itol_files <- function(infiles, opt) {
     annotation <- list(
       DATASET_LABEL = name,
       LEGEND_TITLE = nice_str(name),
-      LEGEND_COLORS = c("#ffffff", end.color),
+      LEGEND_COLORS = c(WHITE, end.color),
       LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
         c("Min.", "Max."), range(x)),
       LEGEND_SHAPES = c(1L, 1L),
       STRIP_WIDTH = 50,
       MARGIN = 5,
       COLOR = "#fb9a99",
-      COLOR_MIN = "#ffffff",
+      COLOR_MIN = WHITE,
       COLOR_MAX = end.color
     )
     print_itol_header(outfile, "DATASET_GRADIENT", annotation)
@@ -524,10 +532,6 @@ create_itol_files <- function(infiles, opt) {
           warning(sprintf("cannot find column '%s', skipping data", name))
       result
     }
-
-    # this could be made specific for each column to yield distinct gradients
-    end.color <- c("#1f78b4", "#33a02c", "#e31a1c",
-      "#ff7f00", "#6a3d9a", "#b15928")
 
     # identifier column, step 1
     idpos <- get_col(icol, x, strict)
@@ -605,7 +609,9 @@ create_itol_files <- function(infiles, opt) {
 
     # normal columns, dispatch done according to data type (class)
     emit.fun <- sprintf("emit_itol_%s", vapply(x, class, ""))
-    end.color <- assort(end.color, emit.fun)
+    # this could be made specific for each column to yield distinct gradients
+    end.color <- assort(c("#1f78b4", "#33a02c", "#e31a1c",
+      "#ff7f00", "#6a3d9a", "#b15928"), emit.fun)
     key <- names(x)
     for (i in seq_along(x)[-c(idpos, lpos, cpos)])
       do.call(emit.fun[[i]], list(x = x[, i], ids = icol, name = key[[i]],
@@ -613,6 +619,7 @@ create_itol_files <- function(infiles, opt) {
           symbols = symbols, max.colors = max.colors, favour = favour))
 
     invisible(TRUE)
+
   }
 
   assert_R_version()
