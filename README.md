@@ -30,7 +30,8 @@ spreadsheet files.
   [ods](https://en.wikipedia.org/wiki/OpenDocument) files.
 
 *Please note that explaining how to correctly install R or R packages is beyond
-the scope of this manual.*
+the scope of this manual, and please do not contact the `table2itol.R` authors
+about this issue. There is plenty of online material available elsewhere.*
 
 ## Installation
 
@@ -124,36 +125,38 @@ and watch the output. If it is empty, you must first install
 `sudo ln -s /usr/bin/Rscript /usr/local/bin/Rscript`
 
 if you have sudo permissions. Alternatively, within the first line of the script
-replace `/usr/local/bin/Rscript` by `/usr/bin/Rscript` or wherever your
+replace `/usr/local/bin/Rscript` by `/usr/bin/Rscript` or wherever your 
 `Rscript` executable is located. A third option is to leave the script as-is and
 enter `Rscript table2itol.R` instead of `./table2itol.R` or whatever location of
-the script you are using. But this is not particularly convenient in the long
+the script you are using. But this is not particularly convenient in the long 
 run.
 
-*Please note that explaining how to correctly install R is beyond the scope of
-this manual.*
+*Please note that explaining how to correctly install R is beyond the scope of 
+this manual, and please do not contact the `table2itol.R` authors about this
+issue. There is plenty of online material available elsewhere.*
 
 ### Command-line or interactive use
 
 #### Missing R package
 
-`there is no package called ‘optparse’`
+`there is no package called 'optparse'`
 
 Solution: Install the [optparse](https://CRAN.R-project.org/package=optparse)
 package for R.
 
-`there is no package called ‘readODS’`
+`there is no package called 'readODS'`
 
 Solution: Install the [readODS](https://CRAN.R-project.org/package=readODS)
 package for R.
 
-`there is no package called ‘readxl’`
+`there is no package called 'readxl'`
 
 Solution: Install the [readxl](https://CRAN.R-project.org/package=readxl)
 package for R.
 
-*Please note that explaining how to correctly install R packages is beyond the
-scope of this manual.*
+*Please note that explaining how to correctly install R packages is beyond the 
+scope of this manual, and please do not contact the `table2itol.R` authors about
+this issue. There is plenty of online material available elsewhere.*
 
 #### Outdated R version
 
@@ -161,8 +164,9 @@ scope of this manual.*
 
 Solution: Install a newer version of [R](https://cran.r-project.org/).
 
-*Please note that explaining how to correctly install R is beyond the scope of
-this manual.*
+*Please note that explaining how to correctly install R is beyond the scope of 
+this manual, and please do not contact the `table2itol.R` authors about this
+issue. There is plenty of online material available elsewhere.*
 
 #### The script generates no output
 
