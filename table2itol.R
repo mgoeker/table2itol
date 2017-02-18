@@ -369,7 +369,7 @@ create_itol_files <- function(infiles, opt) {
   # available.
   #
   emit_itol_factor <- function(x, ids, name, outdir, symbols, max.colors,
-      favour, ...) {
+      favour, border.width, ...) {
 
     product <- function(x, y) {
       cbind(rep(x = x, each = length(y)), rep.int(y, length(x)))
@@ -426,6 +426,7 @@ create_itol_files <- function(infiles, opt) {
         # we are hiding it by drawing it white
         SHOW_DOMAIN_LABELS = 0,
         WIDTH = 25,
+        BORDER_WIDTH = border.width,
         HEIGHT_FACTOR = 1,
         LEGEND_SHAPES = symbols[seq_len(size)],
         LEGEND_COLORS = colors[seq_len(size)],
@@ -444,7 +445,8 @@ create_itol_files <- function(infiles, opt) {
         LEGEND_COLORS = colors,
         LEGEND_SHAPES = rep.int(1L, size),
         LEGEND_LABELS = levels(x),
-        STRIP_WIDTH = 25
+        STRIP_WIDTH = 25,
+        BORDER_WIDTH = border.width
       ))
       print_itol_header(outfile, "DATASET_COLORSTRIP", annotation)
       print_itol_data(outfile, ids, colors[x], x)
@@ -483,7 +485,7 @@ create_itol_files <- function(infiles, opt) {
   # Vectors of mode 'double' (of class 'numeric' in R) yield a colour gradient.
   #
   emit_itol_numeric <- function(x, ids, name, outdir, end.color,
-      precision, ...) {
+      precision, border.width, ...) {
     outfile <- itol_filename(name, "gradient", outdir)
     annotation <- list(
       DATASET_LABEL = name,
@@ -494,6 +496,7 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_SHAPES = c(1L, 1L),
       STRIP_WIDTH = 50,
       MARGIN = 5,
+      BORDER_WIDTH = border.width,
       COLOR = "#fb9a99",
       COLOR_MIN = WHITE,
       COLOR_MAX = end.color
@@ -509,7 +512,7 @@ create_itol_files <- function(infiles, opt) {
   # The main function, taking care of all columns of data frame 'x'.
   #
   itol_files <- function(x, lcol, bcol, icol, scol, id.pat, precision,
-      max.colors, favour, strict, convert.int, outdir) {
+      max.colors, favour, strict, convert.int, outdir, border.width) {
 
     assort <- function(x, f) {
       idx <- split.default(seq_along(f), f)
@@ -616,7 +619,8 @@ create_itol_files <- function(infiles, opt) {
     for (i in seq_along(x)[-c(idpos, lpos, cpos)])
       do.call(emit.fun[[i]], list(x = x[, i], ids = icol, name = key[[i]],
         end.color = end.color[[i]], precision = precision, outdir = outdir,
-          symbols = symbols, max.colors = max.colors, favour = favour))
+        symbols = symbols, max.colors = max.colors, favour = favour,
+        border.width = border.width))
 
     invisible(TRUE)
 
@@ -630,7 +634,7 @@ create_itol_files <- function(infiles, opt) {
       precision = opt$precision, lcol = opt$label, icol = opt$identifier,
       scol = opt$emblems, id.pat = opt$template, max.colors = opt$`max-colors`,
       favour = opt$favour, outdir = opt$directory, strict = opt$abort,
-      convert.int = opt$conversion)
+      convert.int = opt$conversion, border.width = opt$width)
 
   invisible(NULL)
 
@@ -716,7 +720,12 @@ option.parser <- optparse::OptionParser(option_list = list(
   optparse::make_option(c("-t", "--template"), type = "character",
     help = paste("Template for sprintf function to convert ID column when",
       "deviating from tip labels [default: %default]"),
-    metavar = "PATTERN", default = "%s")
+    metavar = "PATTERN", default = "%s"),
+
+  optparse::make_option(c("-w", "--width"), type = "numeric",
+    help = paste("Border with used for domains, colour strips etc.",
+      "[default: %default]"),
+    metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
 %prog : script for converting spreadsheet files to iTOL input.",

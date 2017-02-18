@@ -1,5 +1,5 @@
-../table2itol.R -a -c double -l final\ label -d G001 -i TID -t %s INPUT/example_001.ods
-../table2itol.R -a -c none -l final\ label -d G002 -i TID -t %s INPUT/example_001.ods
-../table2itol.R -a -c factor -l final\ label -d G003 -i TID -t %s INPUT/example_001.ods
+../table2itol.R -a -c double -d G001 -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
+../table2itol.R -a -c none -d G002 -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
+../table2itol.R -a -c factor -d G003 -i TID -l final\ label -t %s -w 0 INPUT/example_001.ods
 ../table2itol.R -c none -d G004 -i ID -t %s INPUT/empty_table.ods
 ../table2itol.R -c none -d G005 -i ID -t %s INPUT/empty_table.xlsx

@@ -8,6 +8,7 @@ BACKBONE_HEIGHT	0
 BACKBONE_COLOR	#FFFFFF
 SHOW_DOMAIN_LABELS	0
 WIDTH	25
+BORDER_WIDTH	0
 HEIGHT_FACTOR	1
 LEGEND_SHAPES	EL	EL	EL	EL	EL	EL	EL	RE	RE	RE	RE	RE	RE	RE	TL	TL	TL	TL	TL	TL	TL	TR	TR	TR	TR	TR	TR	TR	DI	DI	DI	DI	DI	DI	DI	HH	HH	HH	HH	HH	HH	HH	HV	HV	HV	HV	HV
 LEGEND_COLORS	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99	#e31a1c	#fdbf6f	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99	#e31a1c	#fdbf6f	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99	#e31a1c	#fdbf6f	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99	#e31a1c	#fdbf6f	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99	#e31a1c	#fdbf6f	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99	#e31a1c	#fdbf6f	#a6cee3	#1f78b4	#b2df8a	#33a02c	#fb9a99
