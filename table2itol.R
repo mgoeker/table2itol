@@ -3,7 +3,7 @@
 
 ################################################################################
 #
-# csv2itol -- Rscript script for generating input files for iToL.
+# csv2itol -- Rscript script for generating input files for iTOL.
 #
 # (C) since 2016 by Markus Goeker (markus [DOT] goeker [AT] dsmz [DOT] de)
 #
@@ -288,7 +288,7 @@ create_itol_files <- function(infiles, opt) {
   itol_filename <- function(colname, kind, directory) {
     message(sprintf("Generating %s file for column '%s' ...", kind, colname))
     file.path(directory,
-      sprintf("iToL_%s-%s.txt", kind, gsub("\\W", "_", colname, FALSE, TRUE)))
+      sprintf("iTOL_%s-%s.txt", kind, gsub("\\W", "_", colname, FALSE, TRUE)))
   }
 
 
@@ -646,83 +646,92 @@ create_itol_files <- function(infiles, opt) {
 option.parser <- optparse::OptionParser(option_list = list(
 
   optparse::make_option(c("-a", "--abort"), action = "store_true",
-    help = "Abort if a column cannot be found [default: %default]",
+    help = paste("Abort if a requested column cannot be found instead of",
+      "just skipping the data set [default: %default]"),
     default = FALSE),
 
   optparse::make_option(c("-b", "--background"), type = "character",
-    help = "Name of the background colour column [default: %default]",
+    help = paste("Column to define the background colours of the tip labels;",
+      "empty means no background colours [default: %default]"),
     metavar = "NAME", default = ""),
 
   optparse::make_option(c("-c", "--conversion"), type = "character",
-    help = "Conversion of integers to other data types [default: %default]",
+    help = paste("Convert integer columns to factors ('factor') or numbers",
+      "with decimal points ('double') [default: %default]"),
     metavar = "NAME", default = "none"),
 
   optparse::make_option(c("-d", "--directory"), type = "character",
-    help = "Name of the output directory [default: %default]",
+    help = paste("Place output files in this directory ('.' means working",
+      "directory) [default: %default]"),
     metavar = "DIR", default = "."),
 
+  # TODO: explain better
   optparse::make_option(c("-e", "--emblems"), type = "character",
-    help = "Name of the symbol-defining column [default: %default]",
+    help = paste("Column to define symbols; ignored if empty",
+      "[default: %default]"),
     metavar = "NAME", default = ""),
 
+  # TODO: explain better
   optparse::make_option(c("-f", "--favour"), type = "numeric",
-    help = "Factor for favouring colours over symbols [default: %default]",
+    help = paste("Numeric factor for favouring colours over symbols",
+      "[default: %default]"),
     metavar = "NUMBER", default = 1),
 
   optparse::make_option(c("-h", "--help"), action = "store_true",
-    default = FALSE,
-    help = "Show this help message, then exit [default: %default]"),
+    help = paste("Show this help message, then exit [default: %default]"),
+    default = FALSE),
 
   optparse::make_option(c("-i", "--identifier"), type = "character",
-    help = "Name of the identifer column [default: %default]",
+    help = paste("Mandatory identifier column; after modification",
+      "as defined by --template this column must yield the tip labels of",
+      "the tree [default: %default]"),
     metavar = "NAME", default = "ID"),
 
   optparse::make_option(c("-l", "--label"), type = "character",
-    help = "Name of the label column [default: %default]",
+    help = paste("Column to define the tip labels displayed in the picture",
+      "in place of the tip labels found in the tree [default: %default]"),
     metavar = "NAME", default = "Label"),
 
+  # TODO: explain better
   optparse::make_option(c("-m", "--max-colors"), type = "integer",
-    help = "Cutoff for # levels to switch to symbols [default: %default]",
+    help = paste("Cutoff for the number of factor levels to switch to symbols",
+      "[default: %default]"),
     metavar = "INTEGER", default = 20L),
 
   optparse::make_option(c("-n", "--na-strings"), type = "character",
-    help = "Strings to interpret as non-available values [default: %default]",
+    help = paste("Sentinels for missing input values; several can be",
+      "provided, separated by the value of --separator [default: %default]"),
     metavar = "TEXT", default = "\t(null)\tNA"),
 
   optparse::make_option(c("-p", "--precision"), type = "integer",
-    help = "Number of decimal points for gradient legends [default: %default]",
+    help = paste("Number of decimal points used in the gradient legends",
+      "[default: %default]"),
     metavar = "INTEGER", default = 1L),
 
   optparse::make_option(c("-s", "--separator"), type = "character",
-    help = "Input column separator [default: %default]",
+    help = paste("Input column separator for CSV-like files",
+      "[default: %default]"),
     metavar = "CHARACTER", default = "\t"),
 
   optparse::make_option(c("-t", "--template"), type = "character",
-    help = "Template for sprintf to convert ID column [default: %default]",
+    help = paste("Template for sprintf function to convert ID column when",
+      "deviating from tip labels [default: %default]"),
     metavar = "PATTERN", default = "%s")
 
 ), add_help_option = FALSE, description = "
-%prog : script for converting spreadsheet files to iToL input.",
+%prog : script for converting spreadsheet files to iTOL input.",
 epilogue = "
-You need the readxl and readODS packages for applying this script to Excel and
-Libreoffice or Openoffice ods files, respectively.
+OFTEN NEEDED OPTIONS:
 
-IMPORTANT OPTIONS:
-
--b\tOptional column that defines the background colour of the labels.
--c\tConversion of integers to other data types: 'factor', 'double' or 'none'.
--i\tUnless name of identifier column happens to match the default.
--l\tUnless the name of the label column happens to match the default.
--n\tThe sentinel(s) used to indicate missing values in input. Several may be
-  \tprovided, separated by the value of the '-s' option.
--s\tUnless the separator character happens to match the default.
--t\tTemplate for modifying the identifier column, e.g. prepending something.
+-i\tUnless name of tip identifier column happens to match default.
+-l\tUnless name of final tip label column happens to match default.
+-s\tUnless separator character happens to match default.
 
 USE OF DATA TYPES:
 
-character, integer, logical -> factor -> iToL domains
-integer -> double -> iToL gradient
-integer -> iToL simplebar
+character, integer, logical -> factor -> iTOL domains
+integer -> double -> iTOL gradient
+integer -> iTOL simplebar
 
 EXAMPLES:
 
