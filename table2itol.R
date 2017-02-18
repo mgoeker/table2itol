@@ -721,7 +721,7 @@ option.parser <- optparse::OptionParser(option_list = list(
 ), add_help_option = FALSE, description = "
 %prog : script for converting spreadsheet files to iTOL input.",
 epilogue = "
-OFTEN NEEDED OPTIONS:
+FREQUENTLY NEEDED OPTIONS:
 
 -i\tUnless name of tip identifier column happens to match default.
 -l\tUnless name of final tip label column happens to match default.

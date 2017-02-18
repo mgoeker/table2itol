@@ -21,16 +21,31 @@ set -eu
 
 # Expects textual input files with name of directory of expected output files
 # in 1st field, name of directory of resulting output files in 2nd fields, and
-# program call to be tested in the rest of the fields.
+# program call to be tested in the rest of the fields. First argument must be
+# example output file that will list the successful calls to table2itol.R.
 #
 function check_outdir
 {
 
   [ $# -gt 0 ] || return
 
-  local expdir outdir result empty
+  local examples=$1
+  shift
+
+  [ $# -gt 0 ] || return
+
+  local expdir outdir result empty infile
   declare -a words
   declare -i i
+
+  for infile; do
+    if [ "$infile" = "$examples" ]; then
+      echo "ERROR: example file '$examples' used as input file" >&2
+      return 1
+    fi
+  done
+
+  rm -f "$examples"
 
   while read -a words; do
 
@@ -70,8 +85,11 @@ function check_outdir
 
     echo -e "TEST $expdir <=> $outdir\t$result"
 
-    if [ "$result" = SUCCESS ] && [ -z "$empty" ]; then
-      rm -f "$outdir"/* && rmdir "$outdir"
+    if [ "$result" = SUCCESS ]; then
+      if [ -z "$empty" ]; then
+        rm -f "$outdir"/* && rmdir "$outdir"
+      fi
+      echo "${words[@]// /\\ }" >> "$examples"
     fi
 
     echo >&2
@@ -84,8 +102,12 @@ function check_outdir
 ################################################################################
 
 
+[ -z "${0%/*}" ] || cd "${0%/*}"
+
+
 [ $# -eq 0 ] && [ -s tests.def ] && set -- tests.def
 
 
-[ $# -gt 0 ] && check_outdir "$@"
+[ $# -gt 0 ] && check_outdir examples.txt "$@"
+
 

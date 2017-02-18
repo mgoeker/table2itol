@@ -16,7 +16,8 @@ spreadsheet files.
   input column but this can be modified by the user.
 * Provides carefully chosen colour vectors for up to 40 levels but combines
   them with symbols for maximizing contrast.
-* Can be used either interactively or non-interactively (on the command line).
+* Can be used either interactively on any operating system on which R is
+  running, or non-interactively using the command line of a UNIX-like system.
 
 ## Prerequisites
 
@@ -91,6 +92,14 @@ create_itol_files(infiles, opt)
 
 The analogy should be obvious, hence for details on the values of `opt` just 
 see the help message.
+
+## Examples
+
+Exemplars for input table files are found within the `tests/INPUT` folder. A
+list of examples for calling `table2itol.R` is found in `tests/examples.txt`.
+
+*Experts only*: On a UNIX-like system you can run these examples by calling
+`tests/run_tests.sh` provided a modern Bash is installed.
 
 ## Troubleshooting
 
