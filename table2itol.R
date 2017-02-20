@@ -504,16 +504,16 @@ create_itol_files <- function(infiles, opt) {
     annotation <- list(
       BORDER_WIDTH = border.width,
       COLOR = "#4daf4a",
-      DATASET_LABEL	= name,
+      DATASET_LABEL = name,
       FIELD_COLORS = bin.color,
       FIELD_LABELS = pretty_str(name),
       FIELD_SHAPES = bin.symbol,
-      LEGEND_COLORS	= bin.color,
-      LEGEND_LABELS	= pretty_str(name),
-      LEGEND_SHAPES	= 1L,
+      LEGEND_COLORS = bin.color,
+      LEGEND_LABELS = pretty_str(name),
+      LEGEND_SHAPES = 1L,
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
-      WIDTH	= 20
+      WIDTH = 20
     )
     print_itol_header(outfile, "DATASET_BINARY", annotation)
     print_itol_data(outfile, ids, as.integer(x))
@@ -670,7 +670,8 @@ create_itol_files <- function(infiles, opt) {
       spos <- get_col(scol, x, strict)
       if (spos) {
         symbols <- x[, spos]
-        if (!is.factor(symbols) || length(levels(symbols)) > length(SYMBOLS)) {
+        if (!is.factor(symbols) || anyNA(symbols) ||
+            length(levels(symbols)) > length(SYMBOLS)) {
           warning("column '", scol, "' is either not a factor or ",
             "has too many levels to be used for deriving symbols")
           symbols <- NULL
@@ -743,16 +744,14 @@ option.parser <- optparse::OptionParser(option_list = list(
       "directory) [default: %default]"),
     metavar = "DIR", default = "."),
 
-  # TODO: explain better
   optparse::make_option(c("-e", "--emblems"), type = "character",
-    help = paste("Column to define symbols; ignored if empty",
+    help = paste("Column to define symbol assignments; ignored if empty",
       "[default: %default]"),
     metavar = "NAME", default = ""),
 
-  # TODO: explain better
   optparse::make_option(c("-f", "--favour"), type = "numeric",
     help = paste("Numeric factor for favouring colours over symbols",
-      "[default: %default]"),
+      "(higher => more colours relative to symbols) [default: %default]"),
     metavar = "NUMBER", default = 1),
 
   optparse::make_option(c("-h", "--help"), action = "store_true",
@@ -770,10 +769,9 @@ option.parser <- optparse::OptionParser(option_list = list(
       "in place of the tip labels found in the tree [default: %default]"),
     metavar = "NAME", default = "Label"),
 
-  # TODO: explain better
   optparse::make_option(c("-m", "--max-colors"), type = "integer",
-    help = paste("Cutoff for the number of factor levels to switch to symbols",
-      "[default: %default]"),
+    help = paste("Exceeding this threshold causes fewer colours and more",
+      "symbols to be selected (see also --favour) [default: %default]"),
     metavar = "INTEGER", default = 20L),
 
   optparse::make_option(c("-n", "--na-strings"), type = "character",
