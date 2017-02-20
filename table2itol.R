@@ -54,7 +54,12 @@ create_itol_files <- function(infiles, opt) {
 
   BLACK <- "#000000"
 
+
   WHITE <- "#FFFFFF"
+
+
+  SPECIAL_COLORS <- c("#1f78b4", "#33a02c", "#e31a1c",
+    "#ff7f00", "#6a3d9a", "#b15928")
 
 
   # Colour vectors collected by Jan P. Meier-Kolthoff.
@@ -229,12 +234,15 @@ create_itol_files <- function(infiles, opt) {
   )
 
 
+  GENERATED_FILES <- new.env(TRUE, emptyenv())
+
+
   ## Helper functions
 
 
   # E.g. anyNA() is only available from 3.1.0 on.
   #
-  assert_R_version <- function(wanted = numeric_version("3.1.0")) {
+  assert_R_version <- function(wanted = numeric_version("3.2.0")) {
     if (getRversion() < wanted)
       stop(sprintf("need a newer version of R, %s or higher", wanted))
     invisible(TRUE)
@@ -258,7 +266,8 @@ create_itol_files <- function(infiles, opt) {
         x[, i] <- factor(x[, i])
       x
     }
-    switch(EXPR = tolower(tools::file_ext(file)),
+    switch(
+      EXPR = tolower(tools::file_ext(file)),
       ods = lapply(lapply(X = readODS::ods_sheets(file), path = file,
         FUN = readODS::read_ods, na = opt$`na-strings`[[1L]], col_names = TRUE,
         col_types = NULL, formula_as_formula = FALSE, skip = 0L, range = NULL),
@@ -286,15 +295,19 @@ create_itol_files <- function(infiles, opt) {
   # Used for generating the output filename.
   #
   itol_filename <- function(colname, kind, directory) {
+    result <- file.path(directory, sprintf("iTOL_%s-%s.txt", kind,
+      gsub("\\W", "_", colname, FALSE, TRUE)))
+    if (exists(result, GENERATED_FILES))
+      stop(sprintf("name clash: file '%s' has already been generated", result))
+    GENERATED_FILES[[result]] <- TRUE
     message(sprintf("Generating %s file for column '%s' ...", kind, colname))
-    file.path(directory,
-      sprintf("iTOL_%s-%s.txt", kind, gsub("\\W", "_", colname, FALSE, TRUE)))
+    result
   }
 
 
   # Used for generating legend titles.
   #
-  nice_str <- function(x) {
+  pretty_str <- function(x) {
     chartr("_.", "  ", x)
   }
 
@@ -306,6 +319,7 @@ create_itol_files <- function(infiles, opt) {
       if (!length(x))
         return(NULL)
       stopifnot(!is.null(names(x)))
+      x <- x[sort.list(names(x))]
       sizes <- lengths(x, FALSE)
       for (i in which(sizes > 1L))
         x[[i]] <- paste0(x[[i]], collapse = "\t")
@@ -350,12 +364,12 @@ create_itol_files <- function(infiles, opt) {
     outfile <- itol_filename(name, "treecolors", outdir)
     colors <- select_colours(size, FALSE)
     annotation <- list(
+      COLOR = "#a6cee3",
       DATASET_LABEL = name,
-      LEGEND_TITLE = nice_str(name),
       LEGEND_COLORS = colors,
-      LEGEND_SHAPES = rep.int(1L, size),
       LEGEND_LABELS = levels(x),
-      COLOR = "#a6cee3"
+      LEGEND_SHAPES = rep.int(1L, size),
+      LEGEND_TITLE = pretty_str(name)
     )
     print_itol_header(outfile, "TREE_COLORS", annotation)
     print_itol_data(outfile, ids, "range", colors[x], x)
@@ -420,17 +434,17 @@ create_itol_files <- function(infiles, opt) {
       }
 
       annotation <- c(base.annotation, list(
-        LEGEND_TITLE = nice_str(name),
         BACKBONE_HEIGHT = 0, # controls the height of the midline
         BACKBONE_COLOR = WHITE, # controls the color of the midline
         # we are hiding it by drawing it white
-        SHOW_DOMAIN_LABELS = 0,
-        WIDTH = 25,
         BORDER_WIDTH = border.width,
         HEIGHT_FACTOR = 1,
-        LEGEND_SHAPES = symbols[seq_len(size)],
         LEGEND_COLORS = colors[seq_len(size)],
-        LEGEND_LABELS = levels(x)
+        LEGEND_LABELS = levels(x),
+        LEGEND_SHAPES = symbols[seq_len(size)],
+        LEGEND_TITLE = pretty_str(name),
+        SHOW_DOMAIN_LABELS = 0,
+        WIDTH = 25
       ))
       print_itol_header(outfile, "DATASET_DOMAINS", annotation)
       joint <- paste(symbols[x], 0L, 10L, colors[x], as.character(x), sep = "|")
@@ -441,17 +455,37 @@ create_itol_files <- function(infiles, opt) {
       outfile <- itol_filename(name, "colorstrip", outdir)
       colors <- select_colours(size, anyNA(levels(x)))
       annotation <- c(base.annotation, list(
-        LEGEND_TITLE = nice_str(name),
+        BORDER_WIDTH = border.width,
         LEGEND_COLORS = colors,
-        LEGEND_SHAPES = rep.int(1L, size),
         LEGEND_LABELS = levels(x),
-        STRIP_WIDTH = 25,
-        BORDER_WIDTH = border.width
+        LEGEND_SHAPES = rep.int(1L, size),
+        LEGEND_TITLE = pretty_str(name),
+        STRIP_WIDTH = 25
       ))
       print_itol_header(outfile, "DATASET_COLORSTRIP", annotation)
       print_itol_data(outfile, ids, colors[x], x)
 
     }
+  }
+
+
+  # Integer vectors yield a bar chart.
+  #
+  emit_itol_integer <- function(x, ids, name, outdir, ...) {
+    outfile <- itol_filename(name, "simplebar", outdir)
+    annotation <- list(
+      COLOR = BLACK,
+      DATASET_LABEL = name,
+      LEGEND_COLORS = BLACK,
+      LEGEND_LABELS = paste0(sprintf("%s (%i)", c("Min.", "Max."),
+        range(x, na.rm = TRUE)), collapse = " "),
+      LEGEND_SHAPES = 1L,
+      LEGEND_TITLE = pretty_str(name),
+      MARGIN = 5,
+      WIDTH = 200
+    )
+    print_itol_header(outfile, "DATASET_SIMPLEBAR", annotation)
+    print_itol_data(outfile, ids, x)
   }
 
 
@@ -462,23 +496,27 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # Integer vectors yield a bar chart.
+  # For logical vectors.
   #
-  emit_itol_integer <- function(x, ids, name, outdir, ...) {
-    outfile <- itol_filename(name, "simplebar", outdir)
+  emit_itol_logical <- function(x, ids, name, outdir, bin.color, bin.symbol,
+      border.width, ...) {
+    outfile <- itol_filename(name, "binary", outdir)
     annotation <- list(
-      DATASET_LABEL = name,
-      LEGEND_TITLE = nice_str(name),
-      LEGEND_COLORS = BLACK,
-      LEGEND_LABELS = paste0(sprintf("%s (%i)", c("Min.", "Max."),
-        range(x, na.rm = TRUE)), collapse = " "),
-      LEGEND_SHAPES = 1,
-      WIDTH = 200,
+      BORDER_WIDTH = border.width,
+      COLOR = "#4daf4a",
+      DATASET_LABEL	= name,
+      FIELD_COLORS = bin.color,
+      FIELD_LABELS = pretty_str(name),
+      FIELD_SHAPES = bin.symbol,
+      LEGEND_COLORS	= bin.color,
+      LEGEND_LABELS	= pretty_str(name),
+      LEGEND_SHAPES	= 1L,
+      LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
-      COLOR = BLACK
+      WIDTH	= 20
     )
-    print_itol_header(outfile, "DATASET_SIMPLEBAR", annotation)
-    print_itol_data(outfile, ids, x)
+    print_itol_header(outfile, "DATASET_BINARY", annotation)
+    print_itol_data(outfile, ids, as.integer(x))
   }
 
 
@@ -488,21 +526,43 @@ create_itol_files <- function(infiles, opt) {
       precision, border.width, ...) {
     outfile <- itol_filename(name, "gradient", outdir)
     annotation <- list(
+      BORDER_WIDTH = border.width,
+      COLOR = "#fb9a99",
+      COLOR_MAX = end.color,
+      COLOR_MIN = WHITE,
       DATASET_LABEL = name,
-      LEGEND_TITLE = nice_str(name),
       LEGEND_COLORS = c(WHITE, end.color),
       LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
         c("Min.", "Max."), range(x)),
       LEGEND_SHAPES = c(1L, 1L),
-      STRIP_WIDTH = 50,
+      LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
-      BORDER_WIDTH = border.width,
-      COLOR = "#fb9a99",
-      COLOR_MIN = WHITE,
-      COLOR_MAX = end.color
+      STRIP_WIDTH = 50
     )
     print_itol_header(outfile, "DATASET_GRADIENT", annotation)
     print_itol_data(outfile, ids, x)
+  }
+
+
+  # For instances where R does not get the type right because of special
+  # notations.
+  #
+  fix_column_types <- function(x) {
+    # convert binary integer vectors to logical vectors
+    for (i in which(vapply(x, is.integer, NA)))
+      if (all(x[, i] %in% c(0L, 1L, NA_integer_)))
+        storage.mode(x[, i]) <- "logical"
+    # convert factors to logical vectors if values look like boolean values
+    for (i in which(vapply(x, is.factor, NA))) {
+      values <- tolower(levels(x[, i]))
+      if (all(values %in% c("y", "n")))
+        x[, i] <- tolower(x[, i]) == "y"
+      else if (all(values %in% c("yes", "no")))
+        x[, i] <- tolower(x[, i]) == "yes"
+      else if (all(values %in% c("on", "off")))
+        x[, i] <- tolower(x[, i]) == "on"
+    }
+    x
   }
 
 
@@ -551,18 +611,32 @@ create_itol_files <- function(infiles, opt) {
       return(invisible(FALSE))
     }
 
-    # rescue 'logical' columns by conversion to factor
-    for (i in which(vapply(x, is.logical, NA)))
-      x[, i] <- factor(x[, i])
+    x <- fix_column_types(x)
 
     # convert integers to other data types if requested
-    switch(EXPR = convert.int,
+    switch(
+      EXPR = convert.int,
       none = NULL,
       factor = for (i in which(vapply(x, is.integer, NA)))
         x[, i] <- factor(x[, i]),
       double = for (i in which(vapply(x, is.integer, NA)))
         storage.mode(x[, i]) <- "double",
       stop(sprintf("invalid integer conversion indicator '%s'", convert.int))
+    )
+
+    # convert logical vectors to other data types if requested
+    switch(
+      EXPR = convert.int,
+      none = for (i in which(vapply(x, is.logical, NA)))
+        if (anyNA(x[, i]))
+          x[, i] <- factor(x[, i]),
+      factor = for (i in which(vapply(x, is.logical, NA)))
+        x[, i] <- factor(x[, i]),
+      double = for (i in which(vapply(x, is.logical, NA)))
+        if (anyNA(x[, i]))
+          x[is.na(x[, i]), i] <- FALSE,
+      stop(sprintf("invalid logical vector conversion indicator '%s'",
+        convert.int))
     )
 
     # identifier column, step 2
@@ -612,13 +686,13 @@ create_itol_files <- function(infiles, opt) {
 
     # normal columns, dispatch done according to data type (class)
     emit.fun <- sprintf("emit_itol_%s", vapply(x, class, ""))
-    # this could be made specific for each column to yield distinct gradients
-    end.color <- assort(c("#1f78b4", "#33a02c", "#e31a1c",
-      "#ff7f00", "#6a3d9a", "#b15928"), emit.fun)
+    end.color <- assort(SPECIAL_COLORS, emit.fun)
+    bin.symbols <- assort(seq_along(SYMBOLS), emit.fun)
     key <- names(x)
     for (i in seq_along(x)[-c(idpos, lpos, cpos)])
       do.call(emit.fun[[i]], list(x = x[, i], ids = icol, name = key[[i]],
-        end.color = end.color[[i]], precision = precision, outdir = outdir,
+        end.color = end.color[[i]], bin.color = end.color[[i]],
+        bin.symbol = bin.symbols[[i]], precision = precision, outdir = outdir,
         symbols = symbols, max.colors = max.colors, favour = favour,
         border.width = border.width))
 
@@ -741,10 +815,11 @@ USE OF DATA TYPES:
 character, integer, logical -> factor -> iTOL domains
 integer -> double -> iTOL gradient
 integer -> iTOL simplebar
+logical -> iTOL binary
 
 EXAMPLES:
 
-# set the most relevant relevant columns:
+# set just the most relevant columns:
 '%prog -i Genome_ID -l Strain -b Phylum annotation.tsv'
 
 # prepend 'T' to ID column 'Genome_ID', which contains integers:
@@ -763,7 +838,7 @@ opt$`na-strings` <- unlist(strsplit(opt$`na-strings`,
 ################################################################################
 
 
-if (length(infiles) > 0L) {
+if (length(infiles)) {
   create_itol_files(infiles, opt)
 } else {
   optparse::print_help(option.parser)

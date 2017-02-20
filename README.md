@@ -11,7 +11,8 @@ spreadsheet files.
 
 * Works with [CSV](https://en.wikipedia.org/wiki/Delimiter-separated_values),
   OpenOffice, LibreOffice and Microsoft Excel files.
-* Supports iTOL domains, colour strips, simple bars, gradients, and texts.
+* Supports iTOL domains, colour strips, simple bars, gradients, binary data,
+  and texts.
 * By default selects the appropriate visualisation from the data type of each
   input column but this can be modified by the user.
 * Provides carefully chosen colour vectors for up to 40 levels but combines
@@ -164,7 +165,7 @@ this issue. There is plenty of online material available elsewhere.*
 
 #### Outdated R version
 
-`need a newer version of R, 3.1.0 or higher`
+`need a newer version of R, 3.2.0 or higher`
 
 Solution: Install a newer version of [R](https://cran.r-project.org/).
 
@@ -181,15 +182,13 @@ have requested. You can use the `--abort` option to let the script immediately
 stop in such cases, then look up the last error message in this manual. But even
 without `--abort` the script generates warnings when data sets get skipped.
 
-
-
 #### The script generates too many output files
 
 Solution: Accept as a design decision that the scripts generates one file for 
-each input column except for the tip identifier column. Since you can still 
+each input column (except for the tip identifier column). Since you can still 
 decide to not upload (some of) the generated files to iTOL and also deselect 
-data sets within iTOL, we believe it made not much sense to also include a 
-selection mechanism within the `table2itol.R` script. As last resort you could
+data sets within iTOL, we believe it would not make much sense to also include a
+selection mechanism within the `table2itol.R` script. As last resort you could 
 also reduce the number of input columns.
 
 #### A column is requested but missing
@@ -211,4 +210,18 @@ Since the name of each output file is generated from the name of the respective
 input column *and* the resulting kind of visualisation, nothing of importance 
 will be overwritten (but see the section on name clashes between distinct
 spreadsheets).
+
+#### A name clash of output file names occurs
+
+`name clash: file [...] has already been generated`
+
+Solution: Name the columns distinctly in distinct tables within the same file 
+and/or call the `table2itol.R` script individually for each input file, maybe 
+best with distinct values of `--directory`.
+
+Since the name of each output file is generated from the name of the respective 
+input column and the resulting kind of visualisation, columns from distinct 
+input tables but with the same name and the same resulting kind of visualisation
+would yield only a single output file. Instead of silently overwriting the 
+earlier ones, the script stops with an informative error message.
 
