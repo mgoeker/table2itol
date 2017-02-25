@@ -515,7 +515,7 @@ create_itol_files <- function(infiles, opt) {
       WIDTH = 20
     )
     print_itol_header(outfile, "DATASET_BINARY", annotation)
-    print_itol_data(outfile, ids, as.integer(x))
+    print_itol_data(outfile, ids, ifelse(is.na(x), -1L, as.integer(x)))
   }
 
 
