@@ -387,7 +387,6 @@ create_itol_files <- function(infiles, opt) {
 
     product <- function(x, y) {
       cbind(rep(x = x, each = length(y)), rep.int(y, length(x)))
-      #cbind(rep.int(x, length(y)), rep(x = y, each = length(x)))
     }
 
     x <- addNA(x, TRUE)
