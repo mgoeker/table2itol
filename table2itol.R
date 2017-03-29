@@ -3,7 +3,7 @@
 
 ################################################################################
 #
-# csv2itol -- Rscript script for generating input files for iTOL.
+# table2itol.R -- Rscript script for generating input files for iTOL.
 #
 # (C) since 2016 by Markus Goeker (markus [DOT] goeker [AT] dsmz [DOT] de)
 #
@@ -15,7 +15,7 @@
 # readODS package is needed, and readxl for working with Excel files.
 #
 # This script was written for the command line but can also be used in
-# interactive mode.
+# interactive mode. See the README for details.
 #
 ################################################################################
 
@@ -33,6 +33,7 @@ create_itol_files <- function(infiles, opt) {
 
 
   ## Constants
+
 
   # EL  ellipse
   # RE  rectangle
@@ -58,6 +59,8 @@ create_itol_files <- function(infiles, opt) {
   WHITE <- "#FFFFFF"
 
 
+  # Used as end points of colour gradients, with white as other end point.
+  #
   SPECIAL_COLORS <- c("#1f78b4", "#33a02c", "#e31a1c",
     "#ff7f00", "#6a3d9a", "#b15928")
 
