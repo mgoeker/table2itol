@@ -73,7 +73,7 @@ function check_outdir
           result=SUCCESS
         fi
       else
-        if diff -rq "$expdir" "$outdir"; then
+        if diff -rq "$outdir" "$expdir"; then
           result=SUCCESS
         else
           result=FAILURE

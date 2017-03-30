@@ -64,6 +64,9 @@ create_itol_files <- function(infiles, opt) {
   BLACK <- "#000000"
 
 
+  LIGHTGREY <- "#D9D9D9" # R's grey85
+
+
   WHITE <- "#FFFFFF"
 
 
@@ -360,7 +363,7 @@ create_itol_files <- function(infiles, opt) {
       return(FALSE)
     names(args) <- all.names(match.call(), FALSE, -1L, FALSE)
     p <- parent.frame()
-    for (name in names(args))
+    for (name in unique.default(names(args)))
       assign(name, args[[name]][ok], p)
     TRUE
   }
@@ -585,9 +588,9 @@ create_itol_files <- function(infiles, opt) {
       BORDER_WIDTH = border.width,
       COLOR = "#fb9a99",
       COLOR_MAX = end.color,
-      COLOR_MIN = WHITE,
+      COLOR_MIN = LIGHTGREY,
       DATASET_LABEL = name,
-      LEGEND_COLORS = c(WHITE, end.color),
+      LEGEND_COLORS = c(LIGHTGREY, end.color),
       LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
         c("Min.", "Max."), range(x)),
       LEGEND_SHAPES = c(1L, 1L),
@@ -626,7 +629,7 @@ create_itol_files <- function(infiles, opt) {
       DATASET_LABEL = name,
       LEGEND_TITLE = pretty_str(name),
       LEGEND_SHAPES = c(symbol, symbol),
-      LEGEND_COLORS = c(WHITE, end.color),
+      LEGEND_COLORS = c(LIGHTGREY, end.color),
       LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
         c("Min.", "Max."), range(x)),
       MAXIMUM_SIZE = max.size
