@@ -64,7 +64,7 @@ create_itol_files <- function(infiles, opt) {
   BLACK <- "#000000"
 
 
-  LIGHTGREY <- "#D9D9D9" # R's grey85
+  LIGHTGREY <- "#E5E5E5" # R's grey90
 
 
   WHITE <- "#FFFFFF"
