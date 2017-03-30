@@ -72,8 +72,8 @@ create_itol_files <- function(infiles, opt) {
 
   # Used as end points of colour gradients, with white as other end point.
   #
-  SPECIAL_COLORS <- c("#1f78b4", "#33a02c", "#e31a1c",
-    "#ff7f00", "#6a3d9a", "#b15928")
+  SPECIAL_COLORS <- c("#1f78b4", "#e31a1c", "#33a02c", "#b15928",
+    "#6a3d9a", "#ff7f00")
 
 
   # Colour vectors collected by Jan P. Meier-Kolthoff.
@@ -345,19 +345,17 @@ create_itol_files <- function(infiles, opt) {
       x > me + ma * n | x < me - ma * n
     }
     if (is.na(cutoff))
-      return(x)
+      return(logical(length(x)))
     switch(
       EXPR = restrict.mode,
-      atleast = mask <- x < cutoff,
-      beyond = mask <- !outliers(x, cutoff),
-      larger = mask <- x <= cutoff,
-      smaller = mask <- x >= cutoff,
-      upto = mask <- x > cutoff,
-      within = mask <- outliers(x, cutoff),
+      atleast = x < cutoff,
+      beyond = !outliers(x, cutoff),
+      larger = x <= cutoff,
+      smaller = x >= cutoff,
+      upto = x > cutoff,
+      within = outliers(x, cutoff),
       stop(sprintf("unkown 'restrict.mode' value '%s'", restrict.mode))
     )
-    x[mask] <- NA_real_
-    x
   }
 
 
@@ -609,29 +607,37 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
+  # Not yet implemented.
+  #
   emit_branch_symbols_factor <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'factor' ...", name))
   }
 
 
+  # Not yet implemented.
+  #
   emit_branch_symbols_integer <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'integer' ...", name))
   }
 
 
+  # Not yet implemented.
+  #
   emit_branch_symbols_logical <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'logical' ...", name))
   }
 
 
+  # Vectors of mode 'double' (of class 'numeric' in R) yield a colour gradient
+  # within the branch symbols.
+  #
   emit_branch_symbols_numeric <- function(x, ids, name, outdir, symbol,
       end.color, branch.pos, max.size, precision, cutoff, restrict.mode,
       ...) {
     outfile <- itol_filename(name, "branchsymbols", outdir)
-    x <- mask_if_requested(x, cutoff, restrict.mode)
     coordinated_na_removal(x, ids)
     annotation <- list(
-      COLOR = "#fb9a99",
+      COLOR = end.color,
       DATASET_LABEL = name,
       LEGEND_TITLE = pretty_str(name),
       LEGEND_SHAPES = c(symbol, symbol),
@@ -639,8 +645,13 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_LABELS = legend_range(x, precision),
       MAXIMUM_SIZE = max.size
     )
-    print_itol_header(outfile, "DATASET_SYMBOL", annotation)
     x.cls <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
+    mask <- mask_if_requested(x, cutoff, restrict.mode)
+    if (any(mask)) {
+      x[mask] <- NA_real_
+      coordinated_na_removal(x, x.cls, ids)
+    }
+    print_itol_header(outfile, "DATASET_SYMBOL", annotation)
     # columns: ID, symbol, size, colour, fill, position
     print_itol_data(outfile, ids, symbol, max.size, x.cls, 1L, branch.pos)
   }
@@ -752,7 +763,7 @@ create_itol_files <- function(infiles, opt) {
     end.color <- rep_len(SPECIAL_COLORS, length(pos))
     symbol <- rep_len(BRANCH_SYMBOLS, length(pos))
     branch.pos <- seq_along(pos) / (length(pos) + 1L)
-    key <- names(x[, pos])
+    key <- names(x[, pos, drop = FALSE])
     for (i in seq_along(pos))
       do.call(emit.fun[[i]], list(x = x[, pos[[i]]], ids = icol,
         name = key[[i]], end.color = end.color[[i]], symbol = symbol[[i]],
@@ -879,7 +890,7 @@ create_itol_files <- function(infiles, opt) {
 #
 
 
-option.parser <- optparse::OptionParser(option_list = list(
+parser <- optparse::OptionParser(option_list = list(
 
   optparse::make_option(c("-a", "--abort"), action = "store_true",
     help = paste("Abort if a requested column cannot be found instead of",
@@ -993,8 +1004,7 @@ EXAMPLES:
 "
 )
 
-attach(optparse::parse_args(object = option.parser,
-  positional_arguments = TRUE))
+attach(optparse::parse_args(object = parser, positional_arguments = TRUE))
 
 
 ################################################################################
@@ -1003,7 +1013,7 @@ attach(optparse::parse_args(object = option.parser,
 if (length(args)) {
   create_itol_files(args, options)
 } else {
-  optparse::print_help(option.parser)
+  optparse::print_help(parser)
   if (interactive())
     message("
 ********************************************************************************
