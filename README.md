@@ -80,7 +80,7 @@ provided the script is located in the current working directory as given by
 
 When loading the script it shows the usual help message and an indication that
 you are running it in interactive mode. When doing so, you might need to modify
-the `opt` variable much like command-line users might need to apply certain
+the `options` variable much like command-line users might need to apply certain
 command-line options. For instance, in analogy to entering:
 
 `./table2itol.R --identifier Tip --label Name annotation.tsv`
@@ -90,15 +90,16 @@ following:
 
 ```R
 source("table2itol.R")
-opt$identifier <- "Tip"
-opt$label <- "Name"
-infiles <- "annotation.tsv"
-create_itol_files(infiles, opt)
+options$identifier <- "Tip"
+options$label <- "Name"
+args <- "annotation.tsv"
+create_itol_files(args, options)
 ```
 
-The analogy should be obvious, hence for details on the values of `opt` just see
-the help message. With some basic knowledge of R is easy to set up customized
-scripts that modify `opt` for your input files and generate the intended output.
+The analogy should be obvious, hence for details on the values of `options` just
+see the help message. With some basic knowledge of R is easy to set up
+customized scripts that modify `options` for your input files and generate the
+intended output.
 
 ## Examples
 
@@ -148,7 +149,7 @@ issue. There is plenty of online material available elsewhere.*
 
 Solution: Install the [optparse](https://CRAN.R-project.org/package=optparse)
 package for R. (It is not an absolute requirement in interactive mode but
-without it you would need to compile the `opt` variable by hand.)
+without it you would need to compile the `options` variable by hand.)
 
 `there is no package called 'plotrix'`
 

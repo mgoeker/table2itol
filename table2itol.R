@@ -277,18 +277,21 @@ create_itol_files <- function(infiles, opt) {
         x[, i] <- factor(x[, i])
       x
     }
+    na <- unlist(strsplit(opt$`na-strings`, opt$separator, TRUE), FALSE, FALSE)
+    if (!length(na))
+      na <- ""
     switch(
       EXPR = tolower(tools::file_ext(file)),
       ods = lapply(lapply(X = readODS::ods_sheets(file), path = file,
-        FUN = readODS::read_ods, na = opt$`na-strings`[[1L]], col_names = TRUE,
+        FUN = readODS::read_ods, na = na[[1L]], col_names = TRUE,
         col_types = NULL, formula_as_formula = FALSE, skip = 0L, range = NULL),
         rescue_factors),
       xls =,
       xlsx = lapply(lapply(readxl::excel_sheets(file), read_xl, file,
-        opt$`na-strings`[[1L]]), rescue_factors),
+        na[[1L]]), rescue_factors),
       list(read.table(file = file, header = TRUE, sep = opt$separator,
         quote = "\"", dec = ".", fill = FALSE, stringsAsFactors = TRUE,
-        na.strings = opt$`na-strings`, check.names = FALSE, comment.char = ""))
+        na.strings = na, check.names = FALSE, comment.char = ""))
     )
   }
 
@@ -636,13 +639,15 @@ create_itol_files <- function(infiles, opt) {
 
 
   # For instances where R does not get the type right because of special
-  # notations.
+  # notations; also for user-defined type modifications.
   #
-  fix_column_types <- function(x) {
+  fix_column_types <- function(x, convert.int) {
+
     # convert binary integer vectors to logical vectors
     for (i in which(vapply(x, is.integer, NA)))
       if (all(x[, i] %in% c(0L, 1L, NA_integer_)))
         storage.mode(x[, i]) <- "logical"
+
     # convert factors to logical vectors if values look like boolean values
     for (i in which(vapply(x, is.factor, NA))) {
       values <- tolower(levels(x[, i]))
@@ -653,6 +658,33 @@ create_itol_files <- function(infiles, opt) {
       else if (all(values %in% c("on", "off")))
         x[, i] <- tolower(x[, i]) == "on"
     }
+
+    # convert integers to other data types if requested
+    switch(
+      EXPR = convert.int,
+      none = NULL,
+      factor = for (i in which(vapply(x, is.integer, NA)))
+        x[, i] <- factor(x[, i]),
+      double = for (i in which(vapply(x, is.integer, NA)))
+        storage.mode(x[, i]) <- "double",
+      stop(sprintf("invalid integer conversion indicator '%s'", convert.int))
+    )
+
+    # convert logical vectors to other data types if requested
+    switch(
+      EXPR = convert.int,
+      none = for (i in which(vapply(x, is.logical, NA)))
+        if (anyNA(x[, i]))
+          x[, i] <- factor(x[, i]),
+      factor = for (i in which(vapply(x, is.logical, NA)))
+        x[, i] <- factor(x[, i]),
+      double = for (i in which(vapply(x, is.logical, NA)))
+        if (anyNA(x[, i]))
+          x[is.na(x[, i]), i] <- FALSE,
+      stop(sprintf("invalid logical vector conversion indicator '%s'",
+        convert.int))
+    )
+
     x
   }
 
@@ -731,7 +763,7 @@ create_itol_files <- function(infiles, opt) {
   itol_files <- function(x, lcol, bcol, icol, jcol, scol, id.pat, precision,
       max.size, favour, strict, convert.int, outdir, border.width, restrict) {
 
-    # identifier column, step 1
+    # identifier column (mandatory in strict mode), step 1
     idpos <- get_col(icol, x, strict)
     if (!idpos)
       return(invisible(FALSE))
@@ -747,56 +779,31 @@ create_itol_files <- function(infiles, opt) {
       return(invisible(FALSE))
     }
 
-    x <- fix_column_types(x)
-
-    # convert integers to other data types if requested
-    switch(
-      EXPR = convert.int,
-      none = NULL,
-      factor = for (i in which(vapply(x, is.integer, NA)))
-        x[, i] <- factor(x[, i]),
-      double = for (i in which(vapply(x, is.integer, NA)))
-        storage.mode(x[, i]) <- "double",
-      stop(sprintf("invalid integer conversion indicator '%s'", convert.int))
-    )
-
-    # convert logical vectors to other data types if requested
-    switch(
-      EXPR = convert.int,
-      none = for (i in which(vapply(x, is.logical, NA)))
-        if (anyNA(x[, i]))
-          x[, i] <- factor(x[, i]),
-      factor = for (i in which(vapply(x, is.logical, NA)))
-        x[, i] <- factor(x[, i]),
-      double = for (i in which(vapply(x, is.logical, NA)))
-        if (anyNA(x[, i]))
-          x[is.na(x[, i]), i] <- FALSE,
-      stop(sprintf("invalid logical vector conversion indicator '%s'",
-        convert.int))
-    )
+    x <- fix_column_types(x, convert.int)
 
     # must be done before the first use of 'outdir'
     if (!dir.exists(outdir))
       dir.create(outdir)
 
+    # generate branch symbols, skip normal run
     if (length(jcol) && all(nzchar(jcol)))
       return(branch_symbol_files(x = x, icol = icol, jcol = jcol,
         id.pat = id.pat, precision = precision, outdir = outdir,
         max.size = max.size, restrict = restrict))
 
-    # identifier column, step 2
+    # identifier column (mandatory in strict mode), step 2
     icol <- x[, idpos]
     if (is.factor(icol))
       icol <- as.character(icol)
     icol <- sprintf(id.pat, icol)
 
-    # label column
+    # label column (mandatory in strict mode)
     lpos <- get_col(lcol, x, strict)
     if (lpos)
       emit_itol_labeltexts(x = x[, lpos], ids = icol,
         name = names(x)[[lpos]], outdir = outdir)
 
-    # background colour column
+    # background colour column (optional in strict mode)
     if (length(bcol) && all(nzchar(bcol))) {
       cpos <- get_col(bcol, x, strict)
       if (cpos)
@@ -806,7 +813,7 @@ create_itol_files <- function(infiles, opt) {
       cpos <- 0L
     }
 
-    # symbol-defining column
+    # symbol-defining column (optional in strict mode)
     if (length(scol) && all(nzchar(scol))) {
       spos <- get_col(scol, x, strict)
       if (spos) {
@@ -978,19 +985,15 @@ EXAMPLES:
 "
 )
 
-opt <- optparse::parse_args(object = option.parser,
-  positional_arguments = TRUE)
-infiles <- opt$args
-opt <- opt$options
-opt$`na-strings` <- unlist(strsplit(opt$`na-strings`,
-  opt$separator, TRUE), FALSE, FALSE)
+attach(optparse::parse_args(object = option.parser,
+  positional_arguments = TRUE))
 
 
 ################################################################################
 
 
-if (length(infiles)) {
-  create_itol_files(infiles, opt)
+if (length(args)) {
+  create_itol_files(args, options)
 } else {
   optparse::print_help(option.parser)
   if (interactive())
@@ -998,10 +1001,10 @@ if (length(infiles)) {
 ********************************************************************************
 
 Apparently this script is running in interactive mode. You could now modify the
-'opt' variable by hand, set the 'infiles' variable to a vector of file names,
+'options' variable by hand, set the 'args' variable to a vector of file names,
 and then call:
 
-create_itol_files(infiles, opt)
+create_itol_files(args, options)
 
 ********************************************************************************
     ")
