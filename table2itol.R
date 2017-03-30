@@ -329,6 +329,13 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
+  # We assume NA has already been removed.
+  #
+  legend_range <- function(x, precision) {
+    sprintf(sprintf("%%s (%%.%if)", precision), c("Min.", "Max."), range(x))
+  }
+
+
   # Used to not display branch symbols associated with certain values.
   #
   mask_if_requested <- function(x, cutoff, restrict.mode) {
@@ -591,8 +598,7 @@ create_itol_files <- function(infiles, opt) {
       COLOR_MIN = LIGHTGREY,
       DATASET_LABEL = name,
       LEGEND_COLORS = c(LIGHTGREY, end.color),
-      LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
-        c("Min.", "Max."), range(x)),
+      LEGEND_LABELS = legend_range(x, precision),
       LEGEND_SHAPES = c(1L, 1L),
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
@@ -630,8 +636,7 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_TITLE = pretty_str(name),
       LEGEND_SHAPES = c(symbol, symbol),
       LEGEND_COLORS = c(LIGHTGREY, end.color),
-      LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
-        c("Min.", "Max."), range(x)),
+      LEGEND_LABELS = legend_range(x, precision),
       MAXIMUM_SIZE = max.size
     )
     print_itol_header(outfile, "DATASET_SYMBOL", annotation)
@@ -641,8 +646,8 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # For instances where R does not get the type right because of special
-  # notations; also for user-defined type modifications.
+  # Useful when R does not get the type right because of special notations;
+  # also for user-defined type modifications.
   #
   fix_column_types <- function(x, convert.int) {
 
