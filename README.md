@@ -2,10 +2,9 @@
 
 ## About
 
-Interactive Tree of Life ([iTOL](http://itol.embl.de/)) is a popular tool
-for displaying phylogenetic trees and associated information.
-The `table2itol.R` script makes it easy to generate iTOL annotations from
-spreadsheet files.
+Interactive Tree of Life ([iTOL](http://itol.embl.de/)) is a popular tool for
+displaying phylogenetic trees and associated information. The `table2itol.R`
+script makes it easy to generate iTOL annotations from spreadsheet files.
 
 ## Features
 
@@ -13,10 +12,11 @@ spreadsheet files.
   OpenOffice, LibreOffice and Microsoft Excel files.
 * Supports iTOL domains, colour strips, simple bars, gradients, binary data,
   and texts.
+* Partially supports iTOL branch annotation (currently work in progress).
 * By default selects the appropriate visualisation from the data type of each
   input column but this can be modified by the user.
-* Provides carefully chosen colour vectors for up to 40 levels but combines
-  them with symbols for maximizing contrast.
+* Provides carefully chosen colour vectors for up to 40 levels and optionally
+  combines them with symbols for maximizing contrast.
 * Can be used either interactively on any operating system on which R is
   running, or non-interactively using the command line of a UNIX-like system.
 
@@ -24,6 +24,8 @@ spreadsheet files.
 
 * A recent version of [R](https://cran.r-project.org/).
 * The [optparse](https://CRAN.R-project.org/package=optparse) package for R.
+* The [plotrix](https://CRAN.R-project.org/package=plotrix) package for R if
+  you want to generate branch annotations from continuous numeric data.
 * The [readxl](https://CRAN.R-project.org/package=readxl) package for R if
   you want to apply the script to Microsoft Excel files.
 * The [readODS](https://CRAN.R-project.org/package=readODS) package for R if
@@ -147,6 +149,12 @@ issue. There is plenty of online material available elsewhere.*
 Solution: Install the [optparse](https://CRAN.R-project.org/package=optparse)
 package for R. (It is not an absolute requirement in interactive mode but
 without it you would need to compile the `opt` variable by hand.)
+
+`there is no package called 'plotrix'`
+
+Solution: Install the [plotrix](https://CRAN.R-project.org/package=plotrix)
+package for R. (It is only needed if you want to create branch annotations
+from continuous numeric data.)
 
 `there is no package called 'readODS'`
 

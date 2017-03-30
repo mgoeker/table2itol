@@ -12,7 +12,9 @@
 #
 # You must install R and optparse (https://cran.r-project.org/package=optparse)
 # to run this script. For working with Libreoffice/Openoffice ods files, the
-# readODS package is needed, and readxl for working with Excel files.
+# readODS package is needed, and readxl for working with Excel files. For
+# creating branch annotations from continuous numeric data, the plotrix package
+# is needed.
 #
 # This script was written for the command line but can also be used in
 # interactive mode. See the README for details.
@@ -51,6 +53,12 @@ create_itol_files <- function(infiles, opt) {
   #
   SYMBOLS <- c("EL", "RE", "TL", "TR", "DI", "HH", "HV",
     "PL", "PR", "PU", "PD", "OC", "GP")
+
+
+  # Restricted set: 1 = square, 2 = circle, 3 = star, 4 = right triangle,
+  # 5 = left triangle.
+  #
+  BRANCH_SYMBOLS <- seq_len(5L)
 
 
   BLACK <- "#000000"
@@ -315,6 +323,46 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
+  # Used to not display branch symbols associated with certain values.
+  #
+  mask_if_requested <- function(x, cutoff, restrict.mode) {
+    outliers <- function(x, n) {
+      me <- median(x, na.rm = TRUE)
+      ma <- mad(x, na.rm = TRUE)
+      x > me + ma * n | x < me - ma * n
+    }
+    if (is.na(cutoff))
+      return(x)
+    switch(
+      EXPR = restrict.mode,
+      atleast = mask <- x < cutoff,
+      beyond = mask <- !outliers(x, cutoff),
+      larger = mask <- x <= cutoff,
+      smaller = mask <- x >= cutoff,
+      upto = mask <- x > cutoff,
+      within = mask <- outliers(x, cutoff),
+      stop(sprintf("unkown 'restrict.mode' value '%s'", restrict.mode))
+    )
+    x[mask] <- NA_real_
+    x
+  }
+
+
+  # Used to modify several vectors at once. Needs at least one argument.
+  #
+  coordinated_na_removal <- function(...) {
+    args <- list(...)
+    ok <- !is.na(args[[1L]])
+    if (all(ok))
+      return(FALSE)
+    names(args) <- all.names(match.call(), FALSE, -1L, FALSE)
+    p <- parent.frame()
+    for (name in names(args))
+      assign(name, args[[name]][ok], p)
+    TRUE
+  }
+
+
   # Always called before print_itol_data.
   #
   print_itol_header <- function(file, title, annotation) {
@@ -350,12 +398,13 @@ create_itol_files <- function(infiles, opt) {
   #
   emit_itol_labeltexts <- function(x, ids, name, outdir, ...) {
     outfile <- itol_filename(name, "labelling", outdir)
+    coordinated_na_removal(x, ids)
     print_itol_header(outfile, "LABELS", NULL)
     print_itol_data(outfile, ids, x)
   }
 
 
-  # For colouring the leaves.
+  # For colouring the leaves. 'x' is a factor, hence NAs do not get removed.
   #
   emit_itol_labelcolors <- function(x, ids, name, outdir, ...) {
     size <- length(levels(x))
@@ -383,7 +432,7 @@ create_itol_files <- function(infiles, opt) {
 
 
   # Output varies depending on the number of colours and symbols chosen and/or
-  # available.
+  # available. 'x' is a factor, hence NAs do not get removed.
   #
   emit_itol_factor <- function(x, ids, name, outdir, symbols, max.colors,
       favour, border.width, ...) {
@@ -475,12 +524,13 @@ create_itol_files <- function(infiles, opt) {
   #
   emit_itol_integer <- function(x, ids, name, outdir, ...) {
     outfile <- itol_filename(name, "simplebar", outdir)
+    coordinated_na_removal(x, ids)
     annotation <- list(
       COLOR = BLACK,
       DATASET_LABEL = name,
       LEGEND_COLORS = BLACK,
-      LEGEND_LABELS = paste0(sprintf("%s (%i)", c("Min.", "Max."),
-        range(x, na.rm = TRUE)), collapse = " "),
+      LEGEND_LABELS = paste0(sprintf("%s (%i)", c("Min.", "Max."), range(x)),
+        collapse = " "),
       LEGEND_SHAPES = 1L,
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
@@ -498,7 +548,7 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # For logical vectors.
+  # For logical vectors. NAs do not get removed.
   #
   emit_itol_logical <- function(x, ids, name, outdir, bin.color, bin.symbol,
       border.width, ...) {
@@ -527,6 +577,7 @@ create_itol_files <- function(infiles, opt) {
   emit_itol_numeric <- function(x, ids, name, outdir, end.color,
       precision, border.width, ...) {
     outfile <- itol_filename(name, "gradient", outdir)
+    coordinated_na_removal(x, ids)
     annotation <- list(
       BORDER_WIDTH = border.width,
       COLOR = "#fb9a99",
@@ -543,6 +594,44 @@ create_itol_files <- function(infiles, opt) {
     )
     print_itol_header(outfile, "DATASET_GRADIENT", annotation)
     print_itol_data(outfile, ids, x)
+  }
+
+
+  emit_branch_symbols_factor <- function(x, ids, name, outdir, ...) {
+    message(sprintf("Skipping column '%s' of mode 'factor' ...", name))
+  }
+
+
+  emit_branch_symbols_integer <- function(x, ids, name, outdir, ...) {
+    message(sprintf("Skipping column '%s' of mode 'integer' ...", name))
+  }
+
+
+  emit_branch_symbols_logical <- function(x, ids, name, outdir, ...) {
+    message(sprintf("Skipping column '%s' of mode 'logical' ...", name))
+  }
+
+
+  emit_branch_symbols_numeric <- function(x, ids, name, outdir, symbol,
+      end.color, branch.pos, max.size, precision, cutoff, restrict.mode,
+      ...) {
+    outfile <- itol_filename(name, "branchsymbols", outdir)
+    x <- mask_if_requested(x, cutoff, restrict.mode)
+    coordinated_na_removal(x, ids)
+    annotation <- list(
+      COLOR = "#fb9a99",
+      DATASET_LABEL = name,
+      LEGEND_TITLE = pretty_str(name),
+      LEGEND_SHAPES = c(symbol, symbol),
+      LEGEND_COLORS = c(WHITE, end.color),
+      LEGEND_LABELS = sprintf(sprintf("%%s (%%.%if)", precision),
+        c("Min.", "Max."), range(x)),
+      MAXIMUM_SIZE = max.size
+    )
+    print_itol_header(outfile, "DATASET_SYMBOL", annotation)
+    x.cls <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
+    # columns: ID, symbol, size, colour, fill, position
+    print_itol_data(outfile, ids, symbol, max.size, x.cls, 1L, branch.pos)
   }
 
 
@@ -568,35 +657,79 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
+  # Helper function for itol_files().
+  #
+  assort <- function(x, f) {
+    idx <- split.default(seq_along(f), f)
+    result <- vector(typeof(x), length(f))
+    for (i in idx)
+      result[i] <- rep_len(x, length(i))
+    result
+  }
+
+
+  # Helper function for itol_files().
+  #
+  get_col <- function(name, x, strict) {
+    if (length(name) != 1L)
+      stop("need a single column name for identifying special column")
+    result <- match(name, names(x), 0L)
+    if (!result)
+      if (strict)
+        stop(sprintf(
+          "selected column '%s' does not exist -- must select one of %s",
+          name, paste0(sprintf("'%s'", names(x)), collapse = ", ")))
+      else
+        warning(sprintf("cannot find column '%s', skipping data", name))
+    result
+  }
+
+
+  # Called by itol_files() instead of the main branch.
+  #
+  branch_symbol_files <- function(x, icol, jcol, id.pat, precision,
+      outdir, max.size, restrict) {
+
+    if (nzchar(restrict)) {
+      cutoff <- as.double(basename(restrict))
+      restrict.mode <- dirname(restrict)
+      if (restrict.mode == ".") # when only a number was provided
+        restrict.mode <- "upto"
+    } else {
+      cutoff <- NA_real_
+      restrict.mode <- "upto"
+    }
+
+    idpos <- get_col(icol, x, TRUE)
+    jpos <- get_col(jcol, x, TRUE)
+    # currently no check whether ipos or jpos contain '|'
+    icol <- ifelse(is.na(x[, jpos]), sprintf(id.pat, x[, idpos]),
+      paste(sprintf(id.pat, x[, idpos]), sprintf(id.pat, x[, jpos]), sep = "|"))
+
+    # normal columns, dispatch done according to data type (class)
+    pos <- seq_along(x)[-c(idpos, jpos)]
+    emit.fun <- sprintf("emit_branch_symbols_%s", vapply(x[, pos], class, ""))
+    end.color <- rep_len(SPECIAL_COLORS, length(pos))
+    symbol <- rep_len(BRANCH_SYMBOLS, length(pos))
+    branch.pos <- seq_along(pos) / (length(pos) + 1L)
+    key <- names(x[, pos])
+    for (i in seq_along(pos))
+      do.call(emit.fun[[i]], list(x = x[, pos[[i]]], ids = icol,
+        name = key[[i]], end.color = end.color[[i]], symbol = symbol[[i]],
+        branch.pos = branch.pos[[i]], precision = precision, outdir = outdir,
+        max.size = max.size, cutoff = cutoff, restrict.mode = restrict.mode))
+
+    invisible(TRUE)
+  }
+
+
   ## Main
 
 
   # The main function, taking care of all columns of data frame 'x'.
   #
-  itol_files <- function(x, lcol, bcol, icol, scol, id.pat, precision,
-      max.colors, favour, strict, convert.int, outdir, border.width) {
-
-    assort <- function(x, f) {
-      idx <- split.default(seq_along(f), f)
-      result <- vector(typeof(x), length(f))
-      for (i in idx)
-        result[i] <- rep_len(x, length(i))
-      result
-    }
-
-    get_col <- function(name, x, strict) {
-      if (length(name) != 1L)
-        stop("need a single column name for identifying special column")
-      result <- match(name, names(x), 0L)
-      if (!result)
-        if (strict)
-          stop(sprintf(
-            "selected column '%s' does not exist -- must select one of %s",
-            name, paste0(sprintf("'%s'", names(x)), collapse = ", ")))
-        else
-          warning(sprintf("cannot find column '%s', skipping data", name))
-      result
-    }
+  itol_files <- function(x, lcol, bcol, icol, jcol, scol, id.pat, precision,
+      max.size, favour, strict, convert.int, outdir, border.width, restrict) {
 
     # identifier column, step 1
     idpos <- get_col(icol, x, strict)
@@ -609,7 +742,8 @@ create_itol_files <- function(infiles, opt) {
     if (!all(dim(x))) {
       if (strict)
         stop("encountered empty data frame")
-      warning("skipping empty data frame")
+      else
+        warning("skipping empty data frame")
       return(invisible(FALSE))
     }
 
@@ -641,15 +775,20 @@ create_itol_files <- function(infiles, opt) {
         convert.int))
     )
 
+    # must be done before the first use of 'outdir'
+    if (!dir.exists(outdir))
+      dir.create(outdir)
+
+    if (length(jcol) && all(nzchar(jcol)))
+      return(branch_symbol_files(x = x, icol = icol, jcol = jcol,
+        id.pat = id.pat, precision = precision, outdir = outdir,
+        max.size = max.size, restrict = restrict))
+
     # identifier column, step 2
     icol <- x[, idpos]
     if (is.factor(icol))
       icol <- as.character(icol)
     icol <- sprintf(id.pat, icol)
-
-    # must be done before the first use of 'outdir'
-    if (!dir.exists(outdir))
-      dir.create(outdir)
 
     # label column
     lpos <- get_col(lcol, x, strict)
@@ -696,7 +835,7 @@ create_itol_files <- function(infiles, opt) {
       do.call(emit.fun[[i]], list(x = x[, i], ids = icol, name = key[[i]],
         end.color = end.color[[i]], bin.color = end.color[[i]],
         bin.symbol = bin.symbols[[i]], precision = precision, outdir = outdir,
-        symbols = symbols, max.colors = max.colors, favour = favour,
+        symbols = symbols, max.colors = max.size, favour = favour,
         border.width = border.width))
 
     invisible(TRUE)
@@ -709,9 +848,10 @@ create_itol_files <- function(infiles, opt) {
     # note that read_file() is supposed to return a list of data frames
     lapply(X = read_file(infile, opt), FUN = itol_files, bcol = opt$background,
       precision = opt$precision, lcol = opt$label, icol = opt$identifier,
-      scol = opt$emblems, id.pat = opt$template, max.colors = opt$`max-colors`,
+      scol = opt$emblems, id.pat = opt$template, max.size = opt$`max-size`,
       favour = opt$favour, outdir = opt$directory, strict = opt$abort,
-      convert.int = opt$conversion, border.width = opt$width)
+      jcol = opt$identifier2, convert.int = opt$conversion,
+      border.width = opt$width, restrict = opt$restrict)
 
   invisible(NULL)
 
@@ -766,14 +906,20 @@ option.parser <- optparse::OptionParser(option_list = list(
       "the tree [default: %default]"),
     metavar = "NAME", default = "ID"),
 
+  optparse::make_option(c("-j", "--identifier2"), type = "character",
+    help = paste("Optional 2nd identifier column, causing output of branch",
+      "symbols; together with -i this identifies a node [default: %default]"),
+    metavar = "NAME", default = ""),
+
   optparse::make_option(c("-l", "--label"), type = "character",
     help = paste("Column to define the tip labels displayed in the picture",
       "in place of the tip labels found in the tree [default: %default]"),
     metavar = "NAME", default = "Label"),
 
-  optparse::make_option(c("-m", "--max-colors"), type = "integer",
+  optparse::make_option(c("-m", "--max-size"), type = "integer",
     help = paste("Exceeding this threshold causes fewer colours and more",
-      "symbols to be selected (see also --favour) [default: %default]"),
+      "symbols to be selected (see also --favour); also determines size of",
+      "branch symbols [default: %default]"),
     metavar = "INTEGER", default = 20L),
 
   optparse::make_option(c("-n", "--na-strings"), type = "character",
@@ -785,6 +931,11 @@ option.parser <- optparse::OptionParser(option_list = list(
     help = paste("Number of decimal points used in the gradient legends",
       "[default: %default]"),
     metavar = "INTEGER", default = 1L),
+
+  optparse::make_option(c("-r", "--restrict"), type = "character",
+    help = paste("How to select from numeric values that yield branch symbols",
+      "[default: %default]"),
+    metavar = "TEXT/NUMBER", default = ""),
 
   optparse::make_option(c("-s", "--separator"), type = "character",
     help = paste("Input column separator for CSV-like files",
