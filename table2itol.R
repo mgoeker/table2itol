@@ -380,7 +380,8 @@ create_itol_files <- function(infiles, opt) {
     join <- function(x) {
       if (!length(x))
         return(NULL)
-      stopifnot(!is.null(names(x)))
+      if (is.null(names(x)))
+        stop("non-empty annotation lists must have names")
       x <- x[sort.list(names(x))]
       sizes <- lengths(x, FALSE)
       for (i in which(sizes > 1L))
@@ -664,43 +665,39 @@ create_itol_files <- function(infiles, opt) {
 
     # convert binary integer vectors to logical vectors
     for (i in which(vapply(x, is.integer, NA)))
-      if (all(x[, i] %in% c(0L, 1L, NA_integer_)))
+      if (all(is.element(x[, i], c(0L, 1L, NA_integer_))))
         storage.mode(x[, i]) <- "logical"
 
     # convert factors to logical vectors if values look like boolean values
     for (i in which(vapply(x, is.factor, NA))) {
       values <- tolower(levels(x[, i]))
-      if (all(values %in% c("y", "n")))
+      if (all(is.element(values, c("y", "n"))))
         x[, i] <- tolower(x[, i]) == "y"
-      else if (all(values %in% c("yes", "no")))
+      else if (all(is.element(values, c("yes", "no"))))
         x[, i] <- tolower(x[, i]) == "yes"
-      else if (all(values %in% c("on", "off")))
+      else if (all(is.element(values, c("on", "off"))))
         x[, i] <- tolower(x[, i]) == "on"
     }
 
-    # convert integers to other data types if requested
-    switch(
-      EXPR = convert.int,
-      none = NULL,
-      factor = for (i in which(vapply(x, is.integer, NA)))
-        x[, i] <- factor(x[, i]),
-      double = for (i in which(vapply(x, is.integer, NA)))
-        storage.mode(x[, i]) <- "double",
-      stop(sprintf("invalid integer conversion indicator '%s'", convert.int))
-    )
-
-    # convert logical vectors to other data types if requested
+    # convert integers and logical vectors to other data types if requested
     switch(
       EXPR = convert.int,
       none = for (i in which(vapply(x, is.logical, NA)))
         if (anyNA(x[, i]))
           x[, i] <- factor(x[, i]),
-      factor = for (i in which(vapply(x, is.logical, NA)))
-        x[, i] <- factor(x[, i]),
-      double = for (i in which(vapply(x, is.logical, NA)))
-        if (anyNA(x[, i]))
-          x[is.na(x[, i]), i] <- FALSE,
-      stop(sprintf("invalid logical vector conversion indicator '%s'",
+      factor = {
+        for (i in which(vapply(x, is.integer, NA)))
+          x[, i] <- factor(x[, i])
+        for (i in which(vapply(x, is.logical, NA)))
+          x[, i] <- factor(x[, i])
+      },
+      double = {
+        for (i in which(vapply(x, is.integer, NA)))
+          storage.mode(x[, i]) <- "double"
+        for (i in which(vapply(x, is.logical, NA)))
+          x[is.na(x[, i]), i] <- FALSE
+      },
+      stop(sprintf("invalid integer/logical vector conversion indicator '%s'",
         convert.int))
     )
 
