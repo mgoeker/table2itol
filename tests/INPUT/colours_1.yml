@@ -1,7 +1,8 @@
 # Example file for user-defined colour vectors. The YAML format has to be used.
 # Names of the colour vectors are optional but increase readability. Not all
 # colour vectors need to be defined, only those that should replace default
-# colour vectors.
+# colour vectors. An attempt is made to standardize the input colours, yielding
+# hexadecimal codes (such as the ones listed below).
 #
 COLOURS05:
 - '#fb9a99'

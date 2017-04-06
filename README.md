@@ -249,7 +249,13 @@ overwritten (but see the section on name clashes between distinct spreadsheets).
 
 For replacing the default colour vectors by other colour vectors, use the
 `--colour-file` option. Its argument must be the name of a file in
-[YAML](http://yaml.org/) format. Names of the colour vectors are optional in
-such files but increase readability. Not all colour vectors need to be defined,
-only those that should replace default colour vectors. Assignment is solely by
-vector length.
+[YAML](http://yaml.org/) format.
+
+Names of the colour vectors are optional in such files but increase readability.
+Not all colour vectors need to be defined, only those that should replace
+default colour vectors. Assignment is solely by vector length. An attempt is
+made to standardize the input colours, yielding hexadecimal codes. All kinds of
+colour specifications can be used that are accepted by the `col2rgb` function.
+
+The `tests/INPUT` folder contains an example file with user-defined colours.
+

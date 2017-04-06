@@ -76,7 +76,7 @@ create_itol_files <- function(infiles, opt) {
 
   # Colour vectors collected by Jan P. Meier-Kolthoff.
   #
-  COLORS <- list(
+  COLOURS <- list(
     JMK01 = "#1b9e77",
     JMK02 = c("#1b9e77", "#d95f02"),
     JMK03 = c("#1b9e77", "#d95f02", "#7570b3"),
@@ -263,7 +263,7 @@ create_itol_files <- function(infiles, opt) {
 
   # Checking makes sense because colour vectors can be user-defined.
   #
-  assert_colour_vectors <- function(x = COLORS) {
+  assert_colour_vectors <- function(x = COLOURS) {
     if (!identical(seq_along(x), lengths(x, FALSE)))
       stop("incorrectly arranged colour vectors")
     bad <- !vapply(x, is.character, NA)
@@ -281,13 +281,17 @@ create_itol_files <- function(infiles, opt) {
   # For input of user-defined colour vectors.
   #
   read_colour_vectors <- function(file) {
+    standard_colour <- function(x) {
+      x <- grDevices::col2rgb(x, TRUE)
+      tolower(grDevices::rgb(x[1L, ], x[2L, ], x[3L, ], x[4L, ], NULL, 255L))
+    }
     if (!nzchar(file))
       return(NULL)
     x <- yaml::yaml.load_file(file)
     if (!is.list(x))
       x <- list(x)
     n <- lengths(x)
-    x[n > 0L & n <= length(COLORS)]
+    lapply(x[n > 0L & n <= length(COLOURS)], standard_colour)
   }
 
 
@@ -332,10 +336,10 @@ create_itol_files <- function(infiles, opt) {
   select_colours <- function(size, has.na) {
     if (has.na)  {
       message(sprintf("Fetching %i colour(s) ...", size - 1L))
-      c(COLORS[[size - 1L]], WHITE)
+      c(COLOURS[[size - 1L]], WHITE)
     } else {
       message(sprintf("Fetching %i colour(s) ...", size))
-      COLORS[[size]]
+      COLOURS[[size]]
     }
   }
 
@@ -454,9 +458,9 @@ create_itol_files <- function(infiles, opt) {
   #
   emit_itol_labelcolors <- function(x, ids, name, outdir, ...) {
     size <- length(levels(x))
-    if (size > length(COLORS)) {
+    if (size > length(COLOURS)) {
       warning(sprintf("skipping column '%s', which yields > %i levels",
-        name, length(COLORS)))
+        name, length(COLOURS)))
       return()
     }
     outfile <- itol_filename(name, "treecolors", outdir)
@@ -895,7 +899,7 @@ create_itol_files <- function(infiles, opt) {
 
   # assignment of input colour vectors is solely by vector length
   for (cls in read_colour_vectors(opt$`colour-file`))
-    COLORS[[length(cls)]] <- cls
+    COLOURS[[length(cls)]] <- cls
 
   assert_colour_vectors()
 
