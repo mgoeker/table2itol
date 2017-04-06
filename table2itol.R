@@ -755,16 +755,13 @@ create_itol_files <- function(infiles, opt) {
       paste(sprintf(id.pat, x[, idpos]), sprintf(id.pat, x[, jpos]), sep = "|"))
 
     # normal columns, dispatch done according to data type (class)
-    pos <- seq_along(x)[-c(idpos, jpos)]
-    emit.fun <- sprintf("emit_branch_symbols_%s", vapply(x[, pos], class, ""))
-    end.color <- rep_len(SPECIAL_COLORS, length(pos))
-    symbol <- rep_len(BRANCH_SYMBOLS, length(pos))
-    branch.pos <- seq_along(pos) / (length(pos) + 1L)
-    key <- names(x[, pos, drop = FALSE])
-    for (i in seq_along(pos))
-      do.call(emit.fun[[i]], list(x = x[, pos[[i]]], ids = icol,
-        name = key[[i]], end.color = end.color[[i]], symbol = symbol[[i]],
-        branch.pos = branch.pos[[i]], precision = precision, outdir = outdir,
+    x <- x[, -c(idpos, jpos), drop = FALSE]
+    mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
+      fun = lapply(sprintf("emit_branch_symbols_%s", vapply(x, class, "")),
+        match.fun), end.color = rep_len(SPECIAL_COLORS, ncol(x)),
+      symbol = rep_len(BRANCH_SYMBOLS, ncol(x)), SIMPLIFY = FALSE,
+      branch.pos = seq_along(x) / (ncol(x) + 1L), USE.NAMES = FALSE,
+      MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
         max.size = max.size, cutoff = cutoff, restrict.mode = restrict.mode))
 
     invisible(TRUE)
@@ -830,6 +827,7 @@ create_itol_files <- function(infiles, opt) {
     }
 
     # symbol-defining column (optional in strict mode)
+    symbols <- NULL
     if (length(scol) && all(nzchar(scol))) {
       spos <- get_col(scol, x, strict)
       if (spos) {
@@ -842,24 +840,19 @@ create_itol_files <- function(infiles, opt) {
         } else {
           symbols <- SYMBOLS[symbols]
         }
-      } else {
-        symbols <- NULL
       }
-    } else {
-      symbols <- NULL
     }
 
     # normal columns, dispatch done according to data type (class)
-    emit.fun <- sprintf("emit_itol_%s", vapply(x, class, ""))
-    end.color <- assort(SPECIAL_COLORS, emit.fun)
-    bin.symbols <- assort(seq_along(SYMBOLS), emit.fun)
-    key <- names(x)
-    for (i in seq_along(x)[-c(idpos, lpos, cpos)])
-      do.call(emit.fun[[i]], list(x = x[, i], ids = icol, name = key[[i]],
-        end.color = end.color[[i]], bin.color = end.color[[i]],
-        bin.symbol = bin.symbols[[i]], precision = precision, outdir = outdir,
+    x <- x[, -c(idpos, lpos, cpos), drop = FALSE]
+    klass <- vapply(x, class, "")
+    cls <- assort(SPECIAL_COLORS, klass)
+    mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
+      fun = lapply(sprintf("emit_itol_%s", klass), match.fun), end.color = cls,
+      bin.color = cls, bin.symbol = assort(seq_along(SYMBOLS), klass),
+      MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
         symbols = symbols, max.colors = max.size, favour = favour,
-        border.width = border.width))
+        border.width = border.width), SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     invisible(TRUE)
 
@@ -904,7 +897,7 @@ parser <- optparse::OptionParser(option_list = list(
       "with decimal points ('double') [default: %default]"),
     metavar = "NAME", default = "none"),
 
-  optparse::make_option(c("-d", "--directory"), type = "character",
+  optparse::make_option(c("-D", "--directory"), type = "character",
     help = paste("Place output files in this directory ('.' means working",
       "directory) [default: %default]"),
     metavar = "DIR", default = "."),
@@ -1001,7 +994,8 @@ EXAMPLES:
 "
 )
 
-attach(optparse::parse_args(object = parser, positional_arguments = TRUE))
+invisible(list2env(optparse::parse_args(parser,
+  commandArgs(TRUE), TRUE, TRUE), globalenv()))
 
 
 ################################################################################
