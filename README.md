@@ -1,8 +1,3 @@
----
-output:
-  html_document: default
-  word_document: default
----
 # table2itol
 
 ## About
