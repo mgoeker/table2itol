@@ -7,14 +7,12 @@
 #
 # (C) since 2016 by Markus Goeker (markus [DOT] goeker [AT] dsmz [DOT] de)
 #
-# This program is distributed under the terms of the Gnu Public License V2.
-# For further information, see http://www.gnu.org/licenses/gpl.html
+# This program is distributed under the terms of the Gnu Public License. See
+# http://www.gnu.org/licenses/gpl.html for further information.
 #
 # You must install R and optparse (https://cran.r-project.org/package=optparse)
-# to run this script. For working with Libreoffice/Openoffice ods files, the
-# readODS package is needed, and readxl for working with Excel files. For
-# creating branch annotations from continuous numeric data, the plotrix package
-# is needed.
+# to run this script. Several other R packages are needed for special purposes.
+# See the README for details.
 #
 # This script was written for the command line but can also be used in
 # interactive mode. See the README for details.
@@ -263,6 +261,36 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
+  # Checking makes sense because colour vectors can be user-defined.
+  #
+  assert_colour_vectors <- function(x = COLORS) {
+    if (!identical(seq_along(x), lengths(x, FALSE)))
+      stop("incorrectly arranged colour vectors")
+    bad <- !vapply(x, is.character, NA)
+    if (any(bad))
+      stop("wrong data type of colour vector(s) no. ",
+        paste0(seq_along(x)[bad], collapse = ", "))
+    bad <- vapply(x, anyDuplicated.default, 0L)
+    if (any(bad))
+      stop("duplicated value in colour vector(s) no. ",
+        paste0(seq_along(x)[bad > 0L], collapse = ", "))
+    invisible(TRUE)
+  }
+
+
+  # For input of user-defined colour vectors.
+  #
+  read_colour_vectors <- function(file) {
+    if (!nzchar(file))
+      return(NULL)
+    x <- yaml::yaml.load_file(file)
+    if (!is.list(x))
+      x <- list(x)
+    n <- lengths(x)
+    x[n > 0L & n <= length(COLORS)]
+  }
+
+
   # Input method dispatch is based on file extension. Depends on extra library
   # for Excel and Libreoffice/Openoffice files, respectively.  Must ensure
   # character vectors are converted to factors.
@@ -302,10 +330,13 @@ create_itol_files <- function(infiles, opt) {
   # We add white at the end, assuming this represents NA, when NA values occur.
   #
   select_colours <- function(size, has.na) {
-    if (has.na)
+    if (has.na)  {
+      message(sprintf("Fetching %i colour(s) ...", size - 1L))
       c(COLORS[[size - 1L]], WHITE)
-    else
+    } else {
+      message(sprintf("Fetching %i colour(s) ...", size))
       COLORS[[size]]
+    }
   }
 
 
@@ -332,7 +363,10 @@ create_itol_files <- function(infiles, opt) {
   # We assume NA has already been removed.
   #
   legend_range <- function(x, precision) {
-    sprintf(sprintf("%%s (%%.%if)", precision), c("Min.", "Max."), range(x))
+    if (length(precision))
+      sprintf(sprintf("%%s (%%.%if)", precision), c("Min.", "Max."), range(x))
+    else
+      sprintf("%s (%i)", c("Min.", "Max."), range(x))
   }
 
 
@@ -541,8 +575,7 @@ create_itol_files <- function(infiles, opt) {
       COLOR = BLACK,
       DATASET_LABEL = name,
       LEGEND_COLORS = BLACK,
-      LEGEND_LABELS = paste0(sprintf("%s (%i)", c("Min.", "Max."), range(x)),
-        collapse = " "),
+      LEGEND_LABELS = legend_range(x, NULL),
       LEGEND_SHAPES = 1L,
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
@@ -860,6 +893,12 @@ create_itol_files <- function(infiles, opt) {
 
   assert_R_version()
 
+  # assignment of input colour vectors is solely by vector length
+  for (cls in read_colour_vectors(opt$`colour-file`))
+    COLORS[[length(cls)]] <- cls
+
+  assert_colour_vectors()
+
   for (infile in infiles)
     # note that read_file() is supposed to return a list of data frames
     lapply(X = read_file(infile, opt), FUN = itol_files, bcol = opt$background,
@@ -896,6 +935,11 @@ parser <- optparse::OptionParser(option_list = list(
     help = paste("Convert integer columns to factors ('factor') or numbers",
       "with decimal points ('double') [default: %default]"),
     metavar = "NAME", default = "none"),
+
+  optparse::make_option(c("-C", "--colour-file"), type = "character",
+    help = paste("File in YAML format defining alternative colour vectors",
+      "[default: %default]"),
+    metavar = "FILE", default = ""),
 
   optparse::make_option(c("-D", "--directory"), type = "character",
     help = paste("Place output files in this directory ('.' means working",

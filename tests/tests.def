@@ -4,3 +4,4 @@ E003 G003 ../table2itol.R -a -c factor -D __OUTDIR__ -i TID -l final\ label -t %
 E004 G004 ../table2itol.R -c none -D __OUTDIR__ -i ID -t %s INPUT/empty_table.ods
 E005 G005 ../table2itol.R -c none -D __OUTDIR__ -i ID -t %s INPUT/empty_table.xlsx
 E006 G006 ../table2itol.R -D __OUTDIR__ -i Left -j Right INPUT/branch_annotation_1.tsv
+E007 G007 ../table2itol.R -a -C INPUT/colours_1.yml -c double -D __OUTDIR__ -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods

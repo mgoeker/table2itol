@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
 # table2itol
 
 ## About
@@ -17,6 +22,7 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
   input column but this can be modified by the user.
 * Provides carefully chosen colour vectors for up to 40 levels and optionally
   combines them with symbols for maximizing contrast.
+* The default colour vectors can be replaced by user-defined colour vectors.
 * Can be used either interactively on any operating system on which R is
   running, or non-interactively using the command line of a UNIX-like system.
 
@@ -31,6 +37,8 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
 * The [readODS](https://CRAN.R-project.org/package=readODS) package for R if
   you want to apply the script to Libreoffice or Openoffice
   [ods](https://en.wikipedia.org/wiki/OpenDocument) files.
+* The [yaml](https://CRAN.R-project.org/package=yaml) package for R if
+  you want to define colour vectors yourself.
 
 *Please note that explaining how to correctly install R or R packages is beyond
 the scope of this manual, and please do not contact the `table2itol.R` authors
@@ -169,6 +177,12 @@ Solution: Install the [readxl](https://CRAN.R-project.org/package=readxl)
 package for R. (It is only needed if you want to apply the script to Microsoft
 Excel files.)
 
+`there is no package called 'yaml'`
+
+Solution: Install the [yaml](https://CRAN.R-project.org/package=yaml)
+package for R. (It is only needed if you want to use the script in conjunction
+with your own colour vectors.)
+
 *Please note that explaining how to correctly install R packages is beyond the
 scope of this manual, and please do not contact the `table2itol.R` authors about
 this issue. There is plenty of online material available elsewhere.*
@@ -212,15 +226,6 @@ column.
 
 Solution: Use the `--label` option to set the name of the tip label column.
 
-#### All integer columns yield the same kind of visualisation
-
-Solution: For generating distinct kinds of visualisation from distinct integer
-columns, run the script several times with distinct values of `--conversion`.
-Since the name of each output file is generated from the name of the respective
-input column *and* the resulting kind of visualisation, nothing of importance
-will be overwritten (but see the section on name clashes between distinct
-spreadsheets).
-
 #### A name clash of output file names occurs
 
 `name clash: file [...] has already been generated`
@@ -235,3 +240,21 @@ input tables but with the same name and the same resulting kind of visualisation
 would yield only a single output file. Instead of silently overwriting the
 earlier ones, the script stops with an informative error message.
 
+## Frequently asked questions
+
+#### How can I generate other kinds of visualisation from integer columns?
+
+For generating distinct kinds of visualisation from distinct integer columns,
+run the script several times with distinct values of `--conversion`. Since the
+name of each output file is generated from the name of the respective input
+column *and* the resulting kind of visualisation, nothing of importance will be
+overwritten (but see the section on name clashes between distinct spreadsheets).
+
+#### How can I define my own colour vectors?
+
+For replacing the default colour vectors by other colour vectors, use the
+`--colour-file` option. Its argument must be the name of a file in
+[YAML](http://yaml.org/) format. Names of the colour vectors are optional in
+such files but increase readability. Not all colour vectors need to be defined,
+only those that should replace default colour vectors. Assignment is solely by
+vector length.
