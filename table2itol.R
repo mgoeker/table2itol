@@ -301,7 +301,7 @@ create_itol_files <- function(infiles, opt) {
   #
   read_file <- function(file, opt) {
     read_xl <- function(sheet, path, na) {
-      tryCatch(expr = readxl::read_excel(path = path, na = na,
+      tryCatch(expr = readxl::read_excel(path = path, na = na, sheet = sheet,
         col_names = TRUE, col_types = NULL, skip = 0L), error = function(e) {
           warning(e) # a typical error is to encounter an empty sheet
           data.frame() # now we can treat this later on ourselves
@@ -656,6 +656,13 @@ create_itol_files <- function(infiles, opt) {
   #
   emit_branch_symbols_integer <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'integer' ...", name))
+  }
+
+
+  # Should not occur in input.
+  #
+  emit_branch_symbols_list <- function(x, ids, name, outdir, ...) {
+    message(sprintf("Skipping column '%s' of mode 'list' ...", name))
   }
 
 

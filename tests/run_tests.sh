@@ -7,8 +7,8 @@
 #
 # (C) since 2017 by Markus Goeker (markus [DOT] goeker [AT] dsmz [DOT] de)
 #
-# This program is distributed under the terms of the Gnu Public License V2.
-# For further information, see http://www.gnu.org/licenses/gpl.html
+# This program is distributed under the terms of the Gnu Public License. See
+# http://www.gnu.org/licenses/gpl.html for further information.
 #
 ################################################################################
 
