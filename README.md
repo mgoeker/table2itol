@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
 # table2itol
 
 ## About
@@ -75,7 +80,9 @@ if you have sudo permissions. Then you can call the script by just entering
 Open R or [RStudio](https://www.rstudio.com/) or whatever interface to R you
 are using, then enter at the console:
 
-`source("table2itol.R")`
+```R
+source("table2itol.R")
+```
 
 provided the script is located in the current working directory as given by
 `getwd()`. Alternatively, first use `setwd()` to move to the directory in which
@@ -247,15 +254,19 @@ overwritten (but see the section on name clashes between distinct spreadsheets).
 
 #### How can I define my own colour vectors?
 
-For replacing the default colour vectors by other colour vectors, use the
-`--colour-file` option. Its argument must be the name of a file in
-[YAML](http://yaml.org/) format.
+For replacing the default colour vectors by other colour vectors, use the 
+`--colour-file` option. Its argument must be the name of a file in 
+[YAML](http://yaml.org/) format. The `tests/INPUT` folder contains an example
+file with user-defined colours.
 
 Names of the colour vectors are optional in such files but increase readability.
 Not all colour vectors need to be defined, only those that should replace
-default colour vectors. Assignment is solely by vector length. An attempt is
-made to standardize the input colours, yielding hexadecimal codes. All kinds of
-colour specifications can be used that are accepted by the `col2rgb` function.
+certain default colour vectors. Assignment is solely by vector length.
 
-The `tests/INPUT` folder contains an example file with user-defined colours.
-
+An attempt is made to standardize the input colours, yielding hexadecimal codes 
+understood by iTOL. Thus all kinds of colour specifications can be used that are
+accepted by the `col2rgb` function. Uninterpretable and duplicate colours yield
+an error. Call `colors()` to obtain the list of human-readable colour names
+accepted by R. You might also want to visit the 
+[colorbrewer](http://colorbrewer2.org) web site for generating useful colour 
+vectors.
