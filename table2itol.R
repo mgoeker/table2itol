@@ -336,10 +336,16 @@ create_itol_files <- function(infiles, opt) {
   select_colours <- function(size, has.na) {
     if (has.na)  {
       message(sprintf("Fetching %i colour(s) ...", size - 1L))
-      c(COLOURS[[size - 1L]], WHITE)
+      if (size < 2L)
+        WHITE
+      else
+        c(COLOURS[[size - 1L]], WHITE)
     } else {
       message(sprintf("Fetching %i colour(s) ...", size))
-      COLOURS[[size]]
+      if (size < 1L)
+        character()
+      else
+        COLOURS[[size]]
     }
   }
 
