@@ -278,6 +278,20 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
+  # Checking makes sense if 'chr' is used to join strings together.
+  #
+  assert_no_forbidden_character <- function(chr, ...) {
+    x <- list(...)
+    for (str in lapply(x[vapply(x, is.factor, NA)], levels.default)) {
+      bad <- grepl(chr, str, FALSE, FALSE, TRUE)
+      if (any(bad))
+        stop(sprintf("string '%s' contains forbidden character '%s'",
+          str[bad][[1L]], chr))
+    }
+    invisible(TRUE)
+  }
+
+
   # For input of user-defined colour vectors.
   #
   read_colour_vectors <- function(file) {
@@ -463,7 +477,7 @@ create_itol_files <- function(infiles, opt) {
   # For colouring the leaves. 'x' is a factor, hence NAs do not get removed.
   #
   emit_itol_labelcolors <- function(x, ids, name, outdir, ...) {
-    size <- length(levels(x))
+    size <- length(levels.default(x))
     if (size > length(COLOURS)) {
       warning(sprintf("skipping column '%s', which yields > %i levels",
         name, length(COLOURS)))
@@ -475,7 +489,7 @@ create_itol_files <- function(infiles, opt) {
       COLOR = "#a6cee3",
       DATASET_LABEL = name,
       LEGEND_COLORS = colors,
-      LEGEND_LABELS = levels(x),
+      LEGEND_LABELS = levels.default(x),
       LEGEND_SHAPES = rep.int(1L, size),
       LEGEND_TITLE = pretty_str(name)
     )
@@ -499,7 +513,7 @@ create_itol_files <- function(infiles, opt) {
 
     x <- addNA(x, TRUE)
     base.annotation <- list(DATASET_LABEL = name, MARGIN = 5, COLOR = "#bebada")
-    size <- length(levels(x))
+    size <- length(levels.default(x))
 
     if (size > max.colors * length(SYMBOLS)) {
 
@@ -514,7 +528,7 @@ create_itol_files <- function(infiles, opt) {
 
       if (length(symbols)) {
         symbols <- vapply(split.default(symbols, x), `[[`, "", 1L)
-        colors <- select_colours(size, anyNA(levels(x)))
+        colors <- select_colours(size, anyNA(levels.default(x)))
       } else {
         nsym <- ncls <- ceiling(sqrt(size))
         nsym <- round(nsym / favour, 0L)
@@ -535,7 +549,7 @@ create_itol_files <- function(infiles, opt) {
         colors <- select_colours(ncls, FALSE) # NA treated below
         symbols <- product(SYMBOLS, colors)
         colors <- symbols[, 2L]
-        if (anyNA(levels(x))) # ensure last selected position is white
+        if (anyNA(levels.default(x))) # ensure last selected position is white
           colors[[size]] <- WHITE
         symbols <- symbols[, 1L]
       }
@@ -547,24 +561,25 @@ create_itol_files <- function(infiles, opt) {
         BORDER_WIDTH = border.width,
         HEIGHT_FACTOR = 1,
         LEGEND_COLORS = colors[seq_len(size)],
-        LEGEND_LABELS = levels(x),
+        LEGEND_LABELS = levels.default(x),
         LEGEND_SHAPES = symbols[seq_len(size)],
         LEGEND_TITLE = pretty_str(name),
         SHOW_DOMAIN_LABELS = 0,
         WIDTH = 25
       ))
       print_itol_header(outfile, "DATASET_DOMAINS", annotation)
+      assert_no_forbidden_character("|", x)
       joint <- paste(symbols[x], 0L, 10L, colors[x], as.character(x), sep = "|")
       print_itol_data(outfile, ids, 10L, joint)
 
     } else {
 
       outfile <- itol_filename(name, "colorstrip", outdir)
-      colors <- select_colours(size, anyNA(levels(x)))
+      colors <- select_colours(size, anyNA(levels.default(x)))
       annotation <- c(base.annotation, list(
         BORDER_WIDTH = border.width,
         LEGEND_COLORS = colors,
-        LEGEND_LABELS = levels(x),
+        LEGEND_LABELS = levels.default(x),
         LEGEND_SHAPES = rep.int(1L, size),
         LEGEND_TITLE = pretty_str(name),
         STRIP_WIDTH = 25
@@ -720,7 +735,7 @@ create_itol_files <- function(infiles, opt) {
 
     # convert factors to logical vectors if values look like boolean values
     for (i in which(vapply(x, is.factor, NA))) {
-      values <- tolower(levels(x[, i]))
+      values <- tolower(levels.default(x[, i]))
       if (all(is.element(values, c("y", "n"))))
         x[, i] <- tolower(x[, i]) == "y"
       else if (all(is.element(values, c("yes", "no"))))
@@ -800,7 +815,7 @@ create_itol_files <- function(infiles, opt) {
 
     idpos <- get_col(icol, x, TRUE)
     jpos <- get_col(jcol, x, TRUE)
-    # currently no check whether ipos or jpos contain '|'
+    assert_no_forbidden_character("|", x[, idpos], x[, jpos])
     icol <- ifelse(is.na(x[, jpos]), sprintf(id.pat, x[, idpos]),
       paste(sprintf(id.pat, x[, idpos]), sprintf(id.pat, x[, jpos]), sep = "|"))
 
@@ -883,7 +898,7 @@ create_itol_files <- function(infiles, opt) {
       if (spos) {
         symbols <- x[, spos]
         if (!is.factor(symbols) || anyNA(symbols) ||
-            length(levels(symbols)) > length(SYMBOLS)) {
+            length(levels.default(symbols)) > length(SYMBOLS)) {
           warning("column '", scol, "' is either not a factor or ",
             "has too many levels to be used for deriving symbols")
           symbols <- NULL
