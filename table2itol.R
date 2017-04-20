@@ -600,7 +600,7 @@ create_itol_files <- function(infiles, opt) {
       COLOR = BLACK,
       DATASET_LABEL = name,
       LEGEND_COLORS = BLACK,
-      LEGEND_LABELS = legend_range(x, NULL),
+      LEGEND_LABELS = paste0(legend_range(x, NULL), collapse = ", "),
       LEGEND_SHAPES = 1L,
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
