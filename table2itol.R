@@ -432,9 +432,9 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # Always called before print_itol_data.
+  # Here '...' contains the data part.
   #
-  print_itol_header <- function(file, title, annotation) {
+  print_itol <- function(file, title, annotation, ...) {
     join <- function(x) {
       if (!length(x))
         return(NULL)
@@ -450,12 +450,6 @@ create_itol_files <- function(infiles, opt) {
     }
     cat(title, "SEPARATOR TAB", join(annotation), "DATA", file = file,
       labels = NULL, sep = "\n", fill = FALSE, append = FALSE)
-  }
-
-
-  # Always called after print_itol_header.
-  #
-  print_itol_data <- function(file, ...) {
     cat(paste(..., sep = "\t", collapse = NULL), file = file,
       labels = NULL, sep = "\n", fill = FALSE, append = TRUE)
   }
@@ -469,8 +463,7 @@ create_itol_files <- function(infiles, opt) {
   emit_itol_labeltexts <- function(x, ids, name, outdir, ...) {
     outfile <- itol_filename(name, "labelling", outdir)
     coordinated_na_removal(x, ids)
-    print_itol_header(outfile, "LABELS", NULL)
-    print_itol_data(outfile, ids, x)
+    print_itol(outfile, "LABELS", NULL, ids, x)
   }
 
 
@@ -493,8 +486,7 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_SHAPES = rep.int(1L, size),
       LEGEND_TITLE = pretty_str(name)
     )
-    print_itol_header(outfile, "TREE_COLORS", annotation)
-    print_itol_data(outfile, ids, "range", colors[x], x)
+    print_itol(outfile, "TREE_COLORS", annotation, ids, "range", colors[x], x)
   }
 
 
@@ -518,9 +510,9 @@ create_itol_files <- function(infiles, opt) {
     if (size > max.colors * length(SYMBOLS)) {
 
       outfile <- itol_filename(name, "text", outdir)
-      print_itol_header(outfile, "DATASET_TEXT", base.annotation)
       # additional columns: position, color, style, size_factor, rotation
-      print_itol_data(outfile, ids, x, -1, BLACK, "normal", 0.75, 0)
+      print_itol(outfile, "DATASET_TEXT", base.annotation,
+        ids, x, -1, BLACK, "normal", 0.75, 0)
 
     } else if (length(symbols) || size > max.colors) {
 
@@ -567,10 +559,9 @@ create_itol_files <- function(infiles, opt) {
         SHOW_DOMAIN_LABELS = 0,
         WIDTH = 25
       ))
-      print_itol_header(outfile, "DATASET_DOMAINS", annotation)
       assert_no_forbidden_character("|", x)
       joint <- paste(symbols[x], 0L, 10L, colors[x], as.character(x), sep = "|")
-      print_itol_data(outfile, ids, 10L, joint)
+      print_itol(outfile, "DATASET_DOMAINS", annotation, ids, 10L, joint)
 
     } else {
 
@@ -584,8 +575,7 @@ create_itol_files <- function(infiles, opt) {
         LEGEND_TITLE = pretty_str(name),
         STRIP_WIDTH = 25
       ))
-      print_itol_header(outfile, "DATASET_COLORSTRIP", annotation)
-      print_itol_data(outfile, ids, colors[x], x)
+      print_itol(outfile, "DATASET_COLORSTRIP", annotation, ids, colors[x], x)
 
     }
   }
@@ -606,8 +596,7 @@ create_itol_files <- function(infiles, opt) {
       MARGIN = 5,
       WIDTH = 200
     )
-    print_itol_header(outfile, "DATASET_SIMPLEBAR", annotation)
-    print_itol_data(outfile, ids, x)
+    print_itol(outfile, "DATASET_SIMPLEBAR", annotation, ids, x)
   }
 
 
@@ -637,8 +626,8 @@ create_itol_files <- function(infiles, opt) {
       MARGIN = 5,
       WIDTH = 20
     )
-    print_itol_header(outfile, "DATASET_BINARY", annotation)
-    print_itol_data(outfile, ids, ifelse(is.na(x), -1L, as.integer(x)))
+    x <- ifelse(is.na(x), -1L, as.integer(x))
+    print_itol(outfile, "DATASET_BINARY", annotation, ids, x)
   }
 
 
@@ -661,8 +650,7 @@ create_itol_files <- function(infiles, opt) {
       MARGIN = 5,
       STRIP_WIDTH = 50
     )
-    print_itol_header(outfile, "DATASET_GRADIENT", annotation)
-    print_itol_data(outfile, ids, x)
+    print_itol(outfile, "DATASET_GRADIENT", annotation, ids, x)
   }
 
 
@@ -717,9 +705,9 @@ create_itol_files <- function(infiles, opt) {
       x[mask] <- NA_real_
       coordinated_na_removal(x, x.cls, ids)
     }
-    print_itol_header(outfile, "DATASET_SYMBOL", annotation)
     # columns: ID, symbol, size, colour, fill, position
-    print_itol_data(outfile, ids, symbol, max.size, x.cls, 1L, branch.pos)
+    print_itol(outfile, "DATASET_SYMBOL", annotation,
+      ids, symbol, max.size, x.cls, 1L, branch.pos)
   }
 
 
