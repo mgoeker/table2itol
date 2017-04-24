@@ -1,5 +1,5 @@
 ../table2itol.R -a -c double -D G001 -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
-../table2itol.R -a -c none -D G002 -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
+../table2itol.R -a -c none -D G002 -b continent\ of\ isolation\  -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
 ../table2itol.R -a -c factor -D G003 -i TID -l final\ label -t %s -w 0 INPUT/example_001.ods
 ../table2itol.R -c none -D G004 -i ID -t %s INPUT/empty_table.ods
 ../table2itol.R -c none -D G005 -i ID -t %s INPUT/empty_table.xlsx

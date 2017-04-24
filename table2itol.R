@@ -467,9 +467,13 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # For colouring the leaves. 'x' is a factor, hence NAs do not get removed.
+  # For colouring the leaves. 'x' is a factor or coerced to a factor, hence NAs
+  # do not get removed.
   #
   emit_itol_labelcolors <- function(x, ids, name, outdir, ...) {
+    if (!is.factor(x))
+      x <- factor(x)
+    x <- addNA(x, TRUE)
     size <- length(levels.default(x))
     if (size > length(COLOURS)) {
       warning(sprintf("skipping column '%s', which yields > %i levels",
@@ -477,7 +481,7 @@ create_itol_files <- function(infiles, opt) {
       return()
     }
     outfile <- itol_filename(name, "treecolors", outdir)
-    colors <- select_colours(size, FALSE)
+    colors <- select_colours(size, anyNA(levels.default(x)))
     annotation <- list(
       COLOR = "#a6cee3",
       DATASET_LABEL = name,
