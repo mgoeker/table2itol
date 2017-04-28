@@ -282,20 +282,6 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # Checking makes sense if 'chr' is used to join strings together.
-  #
-  assert_no_forbidden_character <- function(chr, ...) {
-    x <- list(...)
-    for (str in lapply(x[vapply(x, is.factor, NA)], levels.default)) {
-      bad <- grepl(chr, str, FALSE, FALSE, TRUE)
-      if (any(bad))
-        stop(sprintf("string '%s' contains forbidden character '%s'",
-          str[bad][[1L]], chr))
-    }
-    invisible(TRUE)
-  }
-
-
   # For input of user-defined colour vectors.
   #
   read_colour_vectors <- function(file) {
@@ -318,6 +304,7 @@ create_itol_files <- function(infiles, opt) {
   # character vectors are converted to factors.
   #
   read_file <- function(file, opt) {
+
     read_xl <- function(sheet, path, na) {
       tryCatch(expr = readxl::read_excel(path = path, na = na, sheet = sheet,
         col_names = TRUE, col_types = NULL, skip = 0L), error = function(e) {
@@ -325,15 +312,19 @@ create_itol_files <- function(infiles, opt) {
           data.frame() # now we can treat this later on ourselves
         })
     }
+
     rescue_factors <- function(x) { # not necessary for CSV input
       for (i in which(vapply(x, is.character, NA)))
         x[, i] <- factor(x[, i])
       x
     }
+
     sep <- get("separator", opt)
+
     na <- unlist(strsplit(get("na-strings", opt), sep, TRUE), FALSE, FALSE)
     if (!length(na))
       na <- ""
+
     switch(
       EXPR = tolower(tools::file_ext(file)),
       ods = lapply(lapply(X = readODS::ods_sheets(file), path = file,
@@ -347,6 +338,21 @@ create_itol_files <- function(infiles, opt) {
         na.strings = na, fill = FALSE, stringsAsFactors = TRUE,
         dec = ".", check.names = FALSE, comment.char = ""))
     )
+
+  }
+
+
+  # Checking makes sense if 'chr' is used to join strings together.
+  #
+  assert_no_forbidden_character <- function(chr, ...) {
+    x <- list(...)
+    for (str in lapply(x[vapply(x, is.factor, NA)], levels.default)) {
+      bad <- grepl(chr, str, FALSE, FALSE, TRUE)
+      if (any(bad))
+        stop(sprintf("string '%s' contains forbidden character '%s'",
+          str[bad][[1L]], chr))
+    }
+    invisible(TRUE)
   }
 
 
@@ -366,19 +372,6 @@ create_itol_files <- function(infiles, opt) {
       else
         COLOURS[[size]]
     }
-  }
-
-
-  # Used for generating the output filename.
-  #
-  itol_filename <- function(colname, kind, directory) {
-    result <- file.path(directory, sprintf("iTOL_%s-%s.txt", kind,
-      gsub("\\W", "_", colname, FALSE, TRUE)))
-    if (exists(result, GENERATED_FILES))
-      stop(sprintf("name clash: file '%s' has already been generated", result))
-    GENERATED_FILES[[result]] <- TRUE
-    message(sprintf("Generating %s file for column '%s' ...", kind, colname))
-    result
   }
 
 
@@ -434,6 +427,19 @@ create_itol_files <- function(infiles, opt) {
     for (name in unique.default(names(args)))
       assign(name, args[[name]][ok], p)
     TRUE
+  }
+
+
+  # Used for generating the output filename.
+  #
+  itol_filename <- function(colname, kind, directory) {
+    result <- file.path(directory, sprintf("iTOL_%s-%s.txt", kind,
+      gsub("\\W", "_", colname, FALSE, TRUE)))
+    if (exists(result, GENERATED_FILES))
+      stop(sprintf("name clash: file '%s' has already been generated", result))
+    GENERATED_FILES[[result]] <- TRUE
+    message(sprintf("Generating %s file for column '%s' ...", kind, colname))
+    result
   }
 
 
@@ -530,7 +536,7 @@ create_itol_files <- function(infiles, opt) {
   # Output varies depending on the number of colours and symbols chosen and/or
   # available. 'x' is a factor, hence NAs do not get removed.
   #
-  emit_itol_factor <- function(x, ids, name, outdir, symbols, maxcls,
+  emit_itol_factor <- function(x, ids, name, outdir, symbols, maxclrs,
       favour, borwid, ...) {
 
     product <- function(x, y) {
@@ -541,13 +547,13 @@ create_itol_files <- function(infiles, opt) {
     annot1 <- list(DATASET_LABEL = name, MARGIN = 5, COLOR = "#bebada")
     size <- length(levels.default(x))
 
-    if (size > maxcls * length(SYMBOLS)) {
+    if (size > maxclrs * length(SYMBOLS)) {
 
       # additional columns: position, color, style, size_factor, rotation
       print_itol(outdir, "text", annot1, ids, x,
         -1, BLACK, "normal", 0.75, 0)
 
-    } else if (length(symbols) || size > maxcls) {
+    } else if (length(symbols) || size > maxclrs) {
 
       if (length(symbols)) {
         symbols <- vapply(split.default(symbols, x), `[[`, "", 1L)
@@ -556,12 +562,12 @@ create_itol_files <- function(infiles, opt) {
         nsym <- ncls <- ceiling(sqrt(size))
         nsym <- round(nsym / favour, 0L)
         ncls <- round(ncls * favour, 0L)
-        if (nsym > length(SYMBOLS) || ncls > maxcls) {
+        if (nsym > length(SYMBOLS) || ncls > maxclrs) {
           msg <- sprintf(
             "Column '%s': # symbols (%i) or # colours (%i) inacceptable",
             name, nsym, ncls)
           if (favour >= 1) {
-            ncls <- maxcls
+            ncls <- maxclrs
             nsym <- ceiling(size / ncls)
           } else {
             nsym <- length(SYMBOLS)
@@ -713,8 +719,7 @@ create_itol_files <- function(infiles, opt) {
   # within the branch symbols.
   #
   emit_branch_symbols_numeric <- function(x, ids, name, outdir, symbol,
-      endcolor, branchpos, maxsize, precision, cutoff, restriction,
-      ...) {
+      endcolor, branchpos, maxsize, precision, cutoff, restriction, ...) {
     coordinated_na_removal(x, ids)
     annotation <- list(
       COLOR = endcolor,
@@ -815,8 +820,8 @@ create_itol_files <- function(infiles, opt) {
 
   # Called by itol_files() instead of the main branch.
   #
-  branch_symbol_files <- function(x, icol, jcol, idpat, precision,
-      outdir, maxsize, restrict) {
+  branch_symbol_files <- function(x, icol, jcol, idpat, precision, outdir,
+      maxsize, restrict) {
 
     if (nzchar(restrict)) {
       cutoff <- as.double(basename(restrict))
@@ -931,16 +936,16 @@ create_itol_files <- function(infiles, opt) {
       fun = lapply(sprintf("emit_itol_%s", klass), match.fun), endcolor = clrs,
       bincolor = clrs, binsymbol = assort(seq_along(SYMBOLS), klass),
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
-        symbols = symbols, maxcls = maxsize, favour = favour,
+        symbols = symbols, maxclrs = maxsize, favour = favour,
         borwid = borwid), SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     invisible(TRUE)
 
   }
 
-  opt <- as.environment(opt)
-
   assert_R_version()
+
+  opt <- as.environment(opt)
 
   # assignment of input colour vectors is solely by vector length
   for (clrs in read_colour_vectors(get("colour-file", opt)))
