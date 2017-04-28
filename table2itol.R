@@ -7,8 +7,12 @@
 #
 # (C) since 2016 by Markus Goeker (markus [DOT] goeker [AT] dsmz [DOT] de)
 #
-# This program is distributed under the terms of the Gnu Public License. See
-# http://www.gnu.org/licenses/gpl.html for further information.
+# This script is distributed under the terms of the GNU General Public License.
+# See http://www.gnu.org/licenses/gpl.html for further information.
+#
+# table2itol.R is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 # You must install R and optparse (https://cran.r-project.org/package=optparse)
 # to run this script. Several other R packages are needed for special purposes.
@@ -347,8 +351,8 @@ create_itol_files <- function(infiles, opt) {
 
   # We add white at the end, assuming this represents NA, when NA values occur.
   #
-  select_colours <- function(size, has.na) {
-    if (has.na)  {
+  select_colours <- function(size, hasna) {
+    if (hasna)  {
       message(sprintf("Fetching %i colour(s) ...", size - 1L))
       if (size < 2L)
         WHITE
@@ -396,7 +400,7 @@ create_itol_files <- function(infiles, opt) {
 
   # Used to not display branch symbols associated with certain values.
   #
-  mask_if_requested <- function(x, cutoff, restrict.mode) {
+  mask_if_requested <- function(x, cutoff, restriction) {
     outliers <- function(x, n) {
       me <- median(x, na.rm = TRUE)
       ma <- mad(x, na.rm = TRUE)
@@ -405,14 +409,14 @@ create_itol_files <- function(infiles, opt) {
     if (is.na(cutoff))
       return(logical(length(x)))
     switch(
-      EXPR = restrict.mode,
+      EXPR = restriction,
       atleast = x < cutoff,
       beyond = !outliers(x, cutoff),
       larger = x <= cutoff,
       smaller = x >= cutoff,
       upto = x > cutoff,
       within = outliers(x, cutoff),
-      stop(sprintf("unkown 'restrict.mode' value '%s'", restrict.mode))
+      stop(sprintf("unkown 'restriction' value '%s'", restriction))
     )
   }
 
@@ -461,8 +465,8 @@ create_itol_files <- function(infiles, opt) {
   # For labelling the leaves.
   #
   emit_itol_labeltexts <- function(x, ids, name, outdir, ...) {
-    outfile <- itol_filename(name, "labelling", outdir)
     coordinated_na_removal(x, ids)
+    outfile <- itol_filename(name, "labelling", outdir)
     print_itol(outfile, "LABELS", NULL, ids, x)
   }
 
@@ -480,17 +484,17 @@ create_itol_files <- function(infiles, opt) {
         name, length(COLOURS)))
       return()
     }
-    outfile <- itol_filename(name, "treecolors", outdir)
-    colors <- select_colours(size, anyNA(levels.default(x)))
     annotation <- list(
       COLOR = "#a6cee3",
       DATASET_LABEL = name,
-      LEGEND_COLORS = colors,
+      LEGEND_COLORS = select_colours(size, anyNA(levels.default(x))),
       LEGEND_LABELS = levels.default(x),
       LEGEND_SHAPES = rep.int(1L, size),
       LEGEND_TITLE = pretty_str(name)
     )
-    print_itol(outfile, "TREE_COLORS", annotation, ids, "range", colors[x], x)
+    outfile <- itol_filename(name, "treecolors", outdir)
+    print_itol(outfile, "TREE_COLORS", annotation,
+      ids, "range", annotation$LEGEND_COLORS[x], x)
   }
 
 
@@ -500,41 +504,39 @@ create_itol_files <- function(infiles, opt) {
   # Output varies depending on the number of colours and symbols chosen and/or
   # available. 'x' is a factor, hence NAs do not get removed.
   #
-  emit_itol_factor <- function(x, ids, name, outdir, symbols, max.colors,
-      favour, border.width, ...) {
+  emit_itol_factor <- function(x, ids, name, outdir, symbols, maxcls,
+      favour, borwid, ...) {
 
     product <- function(x, y) {
       cbind(rep(x = x, each = length(y)), rep.int(y, length(x)))
     }
 
     x <- addNA(x, TRUE)
-    base.annotation <- list(DATASET_LABEL = name, MARGIN = 5, COLOR = "#bebada")
+    annot1 <- list(DATASET_LABEL = name, MARGIN = 5, COLOR = "#bebada")
     size <- length(levels.default(x))
 
-    if (size > max.colors * length(SYMBOLS)) {
+    if (size > maxcls * length(SYMBOLS)) {
 
       outfile <- itol_filename(name, "text", outdir)
-      # additional columns: position, color, style, size_factor, rotation
-      print_itol(outfile, "DATASET_TEXT", base.annotation,
+      print_itol(outfile, "DATASET_TEXT", annot1,
+        # additional columns: position, color, style, size_factor, rotation
         ids, x, -1, BLACK, "normal", 0.75, 0)
 
-    } else if (length(symbols) || size > max.colors) {
-
-      outfile <- itol_filename(name, "domains", outdir)
+    } else if (length(symbols) || size > maxcls) {
 
       if (length(symbols)) {
         symbols <- vapply(split.default(symbols, x), `[[`, "", 1L)
-        colors <- select_colours(size, anyNA(levels.default(x)))
+        clrs <- select_colours(size, anyNA(levels.default(x)))
       } else {
         nsym <- ncls <- ceiling(sqrt(size))
         nsym <- round(nsym / favour, 0L)
         ncls <- round(ncls * favour, 0L)
-        if (nsym > length(SYMBOLS) || ncls > max.colors) {
+        if (nsym > length(SYMBOLS) || ncls > maxcls) {
           msg <- sprintf(
             "Column '%s': # symbols (%i) or # colours (%i) inacceptable",
             name, nsym, ncls)
           if (favour >= 1) {
-            ncls <- max.colors
+            ncls <- maxcls
             nsym <- ceiling(size / ncls)
           } else {
             nsym <- length(SYMBOLS)
@@ -542,21 +544,21 @@ create_itol_files <- function(infiles, opt) {
           }
           message(msg, sprintf(", trying %i/%i instead.", nsym, ncls))
         }
-        colors <- select_colours(ncls, FALSE) # NA treated below
-        symbols <- product(SYMBOLS, colors)
-        colors <- symbols[, 2L]
+        clrs <- select_colours(ncls, FALSE) # NA treated below
+        symbols <- product(SYMBOLS, clrs)
+        clrs <- symbols[, 2L]
         if (anyNA(levels.default(x))) # ensure last selected position is white
-          colors[[size]] <- WHITE
+          clrs[[size]] <- WHITE
         symbols <- symbols[, 1L]
       }
 
-      annotation <- c(base.annotation, list(
+      annotation <- c(annot1, list(
         BACKBONE_HEIGHT = 0, # controls the height of the midline
         BACKBONE_COLOR = WHITE, # controls the color of the midline
         # we are hiding it by drawing it white
-        BORDER_WIDTH = border.width,
+        BORDER_WIDTH = borwid,
         HEIGHT_FACTOR = 1,
-        LEGEND_COLORS = colors[seq_len(size)],
+        LEGEND_COLORS = clrs[seq_len(size)],
         LEGEND_LABELS = levels.default(x),
         LEGEND_SHAPES = symbols[seq_len(size)],
         LEGEND_TITLE = pretty_str(name),
@@ -564,22 +566,23 @@ create_itol_files <- function(infiles, opt) {
         WIDTH = 25
       ))
       assert_no_forbidden_character("|", x)
-      joint <- paste(symbols[x], 0L, 10L, colors[x], as.character(x), sep = "|")
+      joint <- paste(symbols[x], 0L, 10L, clrs[x], as.character(x), sep = "|")
+      outfile <- itol_filename(name, "domains", outdir)
       print_itol(outfile, "DATASET_DOMAINS", annotation, ids, 10L, joint)
 
     } else {
 
-      outfile <- itol_filename(name, "colorstrip", outdir)
-      colors <- select_colours(size, anyNA(levels.default(x)))
-      annotation <- c(base.annotation, list(
-        BORDER_WIDTH = border.width,
-        LEGEND_COLORS = colors,
+      annotation <- c(annot1, list(
+        BORDER_WIDTH = borwid,
+        LEGEND_COLORS = select_colours(size, anyNA(levels.default(x))),
         LEGEND_LABELS = levels.default(x),
         LEGEND_SHAPES = rep.int(1L, size),
         LEGEND_TITLE = pretty_str(name),
         STRIP_WIDTH = 25
       ))
-      print_itol(outfile, "DATASET_COLORSTRIP", annotation, ids, colors[x], x)
+      outfile <- itol_filename(name, "colorstrip", outdir)
+      print_itol(outfile, "DATASET_COLORSTRIP", annotation,
+        ids, annotation$LEGEND_COLORS[x], x)
 
     }
   }
@@ -588,7 +591,6 @@ create_itol_files <- function(infiles, opt) {
   # Integer vectors yield a bar chart.
   #
   emit_itol_integer <- function(x, ids, name, outdir, ...) {
-    outfile <- itol_filename(name, "simplebar", outdir)
     coordinated_na_removal(x, ids)
     annotation <- list(
       COLOR = BLACK,
@@ -600,6 +602,7 @@ create_itol_files <- function(infiles, opt) {
       MARGIN = 5,
       WIDTH = 200
     )
+    outfile <- itol_filename(name, "simplebar", outdir)
     print_itol(outfile, "DATASET_SIMPLEBAR", annotation, ids, x)
   }
 
@@ -613,17 +616,16 @@ create_itol_files <- function(infiles, opt) {
 
   # For logical vectors. NAs do not get removed.
   #
-  emit_itol_logical <- function(x, ids, name, outdir, bin.color, bin.symbol,
-      border.width, ...) {
-    outfile <- itol_filename(name, "binary", outdir)
+  emit_itol_logical <- function(x, ids, name, outdir, bincolor, binsymbol,
+      borwid, ...) {
     annotation <- list(
-      BORDER_WIDTH = border.width,
+      BORDER_WIDTH = borwid,
       COLOR = "#4daf4a",
       DATASET_LABEL = name,
-      FIELD_COLORS = bin.color,
+      FIELD_COLORS = bincolor,
       FIELD_LABELS = pretty_str(name),
-      FIELD_SHAPES = bin.symbol,
-      LEGEND_COLORS = bin.color,
+      FIELD_SHAPES = binsymbol,
+      LEGEND_COLORS = bincolor,
       LEGEND_LABELS = pretty_str(name),
       LEGEND_SHAPES = 1L,
       LEGEND_TITLE = pretty_str(name),
@@ -631,29 +633,30 @@ create_itol_files <- function(infiles, opt) {
       WIDTH = 20
     )
     x <- ifelse(is.na(x), -1L, as.integer(x))
+    outfile <- itol_filename(name, "binary", outdir)
     print_itol(outfile, "DATASET_BINARY", annotation, ids, x)
   }
 
 
   # Vectors of mode 'double' (of class 'numeric' in R) yield a colour gradient.
   #
-  emit_itol_numeric <- function(x, ids, name, outdir, end.color,
-      precision, border.width, ...) {
-    outfile <- itol_filename(name, "gradient", outdir)
+  emit_itol_numeric <- function(x, ids, name, outdir, endcolor,
+      precision, borwid, ...) {
     coordinated_na_removal(x, ids)
     annotation <- list(
-      BORDER_WIDTH = border.width,
+      BORDER_WIDTH = borwid,
       COLOR = "#fb9a99",
-      COLOR_MAX = end.color,
+      COLOR_MAX = endcolor,
       COLOR_MIN = LIGHTGREY,
       DATASET_LABEL = name,
-      LEGEND_COLORS = c(LIGHTGREY, end.color),
+      LEGEND_COLORS = c(LIGHTGREY, endcolor),
       LEGEND_LABELS = legend_range(x, precision),
       LEGEND_SHAPES = c(1L, 1L),
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
       STRIP_WIDTH = 50
     )
+    outfile <- itol_filename(name, "gradient", outdir)
     print_itol(outfile, "DATASET_GRADIENT", annotation, ids, x)
   }
 
@@ -690,35 +693,35 @@ create_itol_files <- function(infiles, opt) {
   # within the branch symbols.
   #
   emit_branch_symbols_numeric <- function(x, ids, name, outdir, symbol,
-      end.color, branch.pos, max.size, precision, cutoff, restrict.mode,
+      endcolor, branchpos, maxsize, precision, cutoff, restriction,
       ...) {
-    outfile <- itol_filename(name, "branchsymbols", outdir)
     coordinated_na_removal(x, ids)
     annotation <- list(
-      COLOR = end.color,
+      COLOR = endcolor,
       DATASET_LABEL = name,
       LEGEND_TITLE = pretty_str(name),
       LEGEND_SHAPES = c(symbol, symbol),
-      LEGEND_COLORS = c(LIGHTGREY, end.color),
+      LEGEND_COLORS = c(LIGHTGREY, endcolor),
       LEGEND_LABELS = legend_range(x, precision),
-      MAXIMUM_SIZE = max.size
+      MAXIMUM_SIZE = maxsize
     )
-    x.cls <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
-    mask <- mask_if_requested(x, cutoff, restrict.mode)
+    xclrs <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
+    mask <- mask_if_requested(x, cutoff, restriction)
     if (any(mask)) {
       x[mask] <- NA_real_
-      coordinated_na_removal(x, x.cls, ids)
+      coordinated_na_removal(x, xclrs, ids)
     }
-    # columns: ID, symbol, size, colour, fill, position
+    outfile <- itol_filename(name, "branchsymbols", outdir)
     print_itol(outfile, "DATASET_SYMBOL", annotation,
-      ids, symbol, max.size, x.cls, 1L, branch.pos)
+      # columns: ID, symbol, size, colour, fill, position
+      ids, symbol, maxsize, xclrs, 1L, branchpos)
   }
 
 
   # Useful when R does not get the type right because of special notations;
   # also for user-defined type modifications.
   #
-  fix_column_types <- function(x, convert.int) {
+  fix_column_types <- function(x, convint) {
 
     # convert binary integer vectors to logical vectors
     for (i in which(vapply(x, is.integer, NA)))
@@ -738,7 +741,7 @@ create_itol_files <- function(infiles, opt) {
 
     # convert integers and logical vectors to other data types if requested
     switch(
-      EXPR = convert.int,
+      EXPR = convint,
       none = for (i in which(vapply(x, is.logical, NA)))
         if (anyNA(x[, i]))
           x[, i] <- factor(x[, i]),
@@ -755,7 +758,7 @@ create_itol_files <- function(infiles, opt) {
           x[is.na(x[, i]), i] <- FALSE
       },
       stop(sprintf("invalid integer/logical vector conversion indicator '%s'",
-        convert.int))
+        convint))
     )
 
     x
@@ -792,34 +795,34 @@ create_itol_files <- function(infiles, opt) {
 
   # Called by itol_files() instead of the main branch.
   #
-  branch_symbol_files <- function(x, icol, jcol, id.pat, precision,
-      outdir, max.size, restrict) {
+  branch_symbol_files <- function(x, icol, jcol, idpat, precision,
+      outdir, maxsize, restrict) {
 
     if (nzchar(restrict)) {
       cutoff <- as.double(basename(restrict))
-      restrict.mode <- dirname(restrict)
-      if (restrict.mode == ".") # when only a number was provided
-        restrict.mode <- "upto"
+      restriction <- dirname(restrict)
+      if (restriction == ".") # when only a number was provided
+        restriction <- "upto"
     } else {
       cutoff <- NA_real_
-      restrict.mode <- "upto"
+      restriction <- "upto"
     }
 
     idpos <- get_col(icol, x, TRUE)
     jpos <- get_col(jcol, x, TRUE)
     assert_no_forbidden_character("|", x[, idpos], x[, jpos])
-    icol <- ifelse(is.na(x[, jpos]), sprintf(id.pat, x[, idpos]),
-      paste(sprintf(id.pat, x[, idpos]), sprintf(id.pat, x[, jpos]), sep = "|"))
+    icol <- ifelse(is.na(x[, jpos]), sprintf(idpat, x[, idpos]),
+      paste(sprintf(idpat, x[, idpos]), sprintf(idpat, x[, jpos]), sep = "|"))
 
     # normal columns, dispatch done according to data type (class)
     x <- x[, -c(idpos, jpos), drop = FALSE]
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
       fun = lapply(sprintf("emit_branch_symbols_%s", vapply(x, class, "")),
-        match.fun), end.color = rep_len(SPECIAL_COLORS, ncol(x)),
+        match.fun), endcolor = rep_len(SPECIAL_COLORS, ncol(x)),
       symbol = rep_len(BRANCH_SYMBOLS, ncol(x)), SIMPLIFY = FALSE,
-      branch.pos = seq_along(x) / (ncol(x) + 1L), USE.NAMES = FALSE,
+      branchpos = seq_along(x) / (ncol(x) + 1L), USE.NAMES = FALSE,
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
-        max.size = max.size, cutoff = cutoff, restrict.mode = restrict.mode))
+        maxsize = maxsize, cutoff = cutoff, restriction = restriction))
 
     invisible(TRUE)
   }
@@ -830,8 +833,8 @@ create_itol_files <- function(infiles, opt) {
 
   # The main function, taking care of all columns of data frame 'x'.
   #
-  itol_files <- function(x, lcol, bcol, icol, jcol, scol, id.pat, precision,
-      max.size, favour, strict, convert.int, outdir, border.width, restrict) {
+  itol_files <- function(x, lcol, bcol, icol, jcol, scol, idpat, precision,
+      maxsize, favour, strict, convint, outdir, borwid, restrict) {
 
     # identifier column (mandatory in strict mode), step 1
     idpos <- get_col(icol, x, strict)
@@ -849,7 +852,7 @@ create_itol_files <- function(infiles, opt) {
       return(invisible(FALSE))
     }
 
-    x <- fix_column_types(x, convert.int)
+    x <- fix_column_types(x, convint)
 
     # must be done before the first use of 'outdir'
     if (!dir.exists(outdir))
@@ -858,14 +861,14 @@ create_itol_files <- function(infiles, opt) {
     # generate branch symbols, skip normal run
     if (length(jcol) && all(nzchar(jcol)))
       return(branch_symbol_files(x = x, icol = icol, jcol = jcol,
-        id.pat = id.pat, precision = precision, outdir = outdir,
-        max.size = max.size, restrict = restrict))
+        idpat = idpat, precision = precision, outdir = outdir,
+        maxsize = maxsize, restrict = restrict))
 
     # identifier column (mandatory in strict mode), step 2
     icol <- x[, idpos]
     if (is.factor(icol))
       icol <- as.character(icol)
-    icol <- sprintf(id.pat, icol)
+    icol <- sprintf(idpat, icol)
 
     # label column (mandatory in strict mode)
     lpos <- get_col(lcol, x, strict)
@@ -903,13 +906,13 @@ create_itol_files <- function(infiles, opt) {
     # normal columns, dispatch done according to data type (class)
     x <- x[, -c(idpos, lpos, cpos), drop = FALSE]
     klass <- vapply(x, class, "")
-    cls <- assort(SPECIAL_COLORS, klass)
+    clrs <- assort(SPECIAL_COLORS, klass)
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
-      fun = lapply(sprintf("emit_itol_%s", klass), match.fun), end.color = cls,
-      bin.color = cls, bin.symbol = assort(seq_along(SYMBOLS), klass),
+      fun = lapply(sprintf("emit_itol_%s", klass), match.fun), endcolor = clrs,
+      bincolor = clrs, binsymbol = assort(seq_along(SYMBOLS), klass),
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
-        symbols = symbols, max.colors = max.size, favour = favour,
-        border.width = border.width), SIMPLIFY = FALSE, USE.NAMES = FALSE)
+        symbols = symbols, maxcls = maxsize, favour = favour,
+        borwid = borwid), SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     invisible(TRUE)
 
@@ -918,8 +921,8 @@ create_itol_files <- function(infiles, opt) {
   assert_R_version()
 
   # assignment of input colour vectors is solely by vector length
-  for (cls in read_colour_vectors(opt$`colour-file`))
-    COLOURS[[length(cls)]] <- cls
+  for (clrs in read_colour_vectors(opt$`colour-file`))
+    COLOURS[[length(clrs)]] <- clrs
 
   assert_colour_vectors()
 
@@ -927,10 +930,10 @@ create_itol_files <- function(infiles, opt) {
     # note that read_file() is supposed to return a list of data frames
     lapply(X = read_file(infile, opt), FUN = itol_files, bcol = opt$background,
       precision = opt$precision, lcol = opt$label, icol = opt$identifier,
-      scol = opt$emblems, id.pat = opt$template, max.size = opt$`max-size`,
+      scol = opt$emblems, idpat = opt$template, maxsize = opt$`max-size`,
       favour = opt$favour, outdir = opt$directory, strict = opt$abort,
-      jcol = opt$identifier2, convert.int = opt$conversion,
-      border.width = opt$width, restrict = opt$restrict)
+      jcol = opt$identifier2, convint = opt$conversion,
+      borwid = opt$width, restrict = opt$restrict)
 
   invisible(NULL)
 
