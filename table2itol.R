@@ -439,12 +439,15 @@ create_itol_files <- function(infiles, opt) {
 
   # Here '...' contains the data part.
   #
-  print_itol <- function(file, title, annotation, ...) {
+  print_itol <- function(outdir, title, annotation, ...) {
+
     join <- function(x) {
       if (!length(x))
         return(NULL)
       if (is.null(names(x)))
         stop("non-empty annotation lists must have names")
+      if (!all(vapply(x, is.atomic, NA)))
+        stop("non-empty annotation lists must contain only atomic values")
       x <- x[sort.list(names(x))]
       sizes <- lengths(x, FALSE)
       for (i in which(sizes > 1L))
@@ -453,10 +456,34 @@ create_itol_files <- function(infiles, opt) {
         x[[i]] <- ""
       paste(names(x), unlist(x, FALSE, FALSE), sep = "\t")
     }
-    cat(title, "SEPARATOR TAB", join(annotation), "DATA", file = file,
+
+    if (is.character(annotation)) {
+      colname <- annotation
+      annotation <- NULL
+    } else {
+      colname <- get("DATASET_LABEL", annotation)
+    }
+
+    kind <- switch(
+      EXPR = title,
+      branchsymbols = "DATASET_SYMBOL",
+      labelling = "LABELS",
+      treecolors = "TREE_COLORS",
+      binary =,
+      colorstrip =,
+      domains =,
+      gradient =,
+      simplebar =,
+      text = sprintf("DATASET_%s", toupper(title)),
+      stop(sprintf("unknown title '%s'", title))
+    )
+
+    file <- itol_filename(colname, title, outdir)
+    cat(kind, "SEPARATOR TAB", join(annotation), "DATA", file = file,
       labels = NULL, sep = "\n", fill = FALSE, append = FALSE)
     cat(paste(..., sep = "\t", collapse = NULL), file = file,
       labels = NULL, sep = "\n", fill = FALSE, append = TRUE)
+
   }
 
 
@@ -467,8 +494,7 @@ create_itol_files <- function(infiles, opt) {
   #
   emit_itol_labeltexts <- function(x, ids, name, outdir, ...) {
     coordinated_na_removal(x, ids)
-    outfile <- itol_filename(name, "labelling", outdir)
-    print_itol(outfile, "LABELS", NULL, ids, x)
+    print_itol(outdir, "labelling", name, ids, x)
   }
 
 
@@ -493,8 +519,7 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_SHAPES = rep.int(1L, size),
       LEGEND_TITLE = pretty_str(name)
     )
-    outfile <- itol_filename(name, "treecolors", outdir)
-    print_itol(outfile, "TREE_COLORS", annotation,
+    print_itol(outdir, "treecolors", annotation,
       ids, "range", get("LEGEND_COLORS", annotation)[x], x)
   }
 
@@ -518,10 +543,9 @@ create_itol_files <- function(infiles, opt) {
 
     if (size > maxcls * length(SYMBOLS)) {
 
-      outfile <- itol_filename(name, "text", outdir)
-      print_itol(outfile, "DATASET_TEXT", annot1,
-        # additional columns: position, color, style, size_factor, rotation
-        ids, x, -1, BLACK, "normal", 0.75, 0)
+      # additional columns: position, color, style, size_factor, rotation
+      print_itol(outdir, "text", annot1, ids, x,
+        -1, BLACK, "normal", 0.75, 0)
 
     } else if (length(symbols) || size > maxcls) {
 
@@ -568,8 +592,7 @@ create_itol_files <- function(infiles, opt) {
       ))
       assert_no_forbidden_character("|", x)
       joint <- paste(symbols[x], 0L, 10L, clrs[x], as.character(x), sep = "|")
-      outfile <- itol_filename(name, "domains", outdir)
-      print_itol(outfile, "DATASET_DOMAINS", annotation, ids, 10L, joint)
+      print_itol(outdir, "domains", annotation, ids, 10L, joint)
 
     } else {
 
@@ -581,8 +604,7 @@ create_itol_files <- function(infiles, opt) {
         LEGEND_TITLE = pretty_str(name),
         STRIP_WIDTH = 25
       ))
-      outfile <- itol_filename(name, "colorstrip", outdir)
-      print_itol(outfile, "DATASET_COLORSTRIP", annotation,
+      print_itol(outdir, "colorstrip", annotation,
         ids, get("LEGEND_COLORS", annotation)[x], x)
 
     }
@@ -603,8 +625,7 @@ create_itol_files <- function(infiles, opt) {
       MARGIN = 5,
       WIDTH = 200
     )
-    outfile <- itol_filename(name, "simplebar", outdir)
-    print_itol(outfile, "DATASET_SIMPLEBAR", annotation, ids, x)
+    print_itol(outdir, "simplebar", annotation, ids, x)
   }
 
 
@@ -634,8 +655,7 @@ create_itol_files <- function(infiles, opt) {
       WIDTH = 20
     )
     x <- ifelse(is.na(x), -1L, as.integer(x))
-    outfile <- itol_filename(name, "binary", outdir)
-    print_itol(outfile, "DATASET_BINARY", annotation, ids, x)
+    print_itol(outdir, "binary", annotation, ids, x)
   }
 
 
@@ -657,8 +677,7 @@ create_itol_files <- function(infiles, opt) {
       MARGIN = 5,
       STRIP_WIDTH = 50
     )
-    outfile <- itol_filename(name, "gradient", outdir)
-    print_itol(outfile, "DATASET_GRADIENT", annotation, ids, x)
+    print_itol(outdir, "gradient", annotation, ids, x)
   }
 
 
@@ -713,8 +732,7 @@ create_itol_files <- function(infiles, opt) {
       x[mask] <- NA_real_
       coordinated_na_removal(x, xclrs, ids)
     }
-    outfile <- itol_filename(name, "branchsymbols", outdir)
-    print_itol(outfile, "DATASET_SYMBOL", annotation,
+    print_itol(outdir, "branchsymbols", annotation,
       # columns: ID, symbol, size, colour, fill, position
       ids, symbol, maxsize, xclrs, 1L, branchpos)
   }
@@ -919,6 +937,8 @@ create_itol_files <- function(infiles, opt) {
     invisible(TRUE)
 
   }
+
+  opt <- as.environment(opt)
 
   assert_R_version()
 
