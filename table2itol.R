@@ -330,7 +330,8 @@ create_itol_files <- function(infiles, opt) {
         x[, i] <- factor(x[, i])
       x
     }
-    na <- unlist(strsplit(opt$`na-strings`, opt$separator, TRUE), FALSE, FALSE)
+    sep <- get("separator", opt)
+    na <- unlist(strsplit(get("na-strings", opt), sep, TRUE), FALSE, FALSE)
     if (!length(na))
       na <- ""
     switch(
@@ -342,9 +343,9 @@ create_itol_files <- function(infiles, opt) {
       xls =,
       xlsx = lapply(lapply(readxl::excel_sheets(file), read_xl, file,
         na[[1L]]), rescue_factors),
-      list(read.table(file = file, header = TRUE, sep = opt$separator,
-        quote = "\"", dec = ".", fill = FALSE, stringsAsFactors = TRUE,
-        na.strings = na, check.names = FALSE, comment.char = ""))
+      list(read.table(file = file, header = TRUE, sep = sep, quote = "\"",
+        na.strings = na, fill = FALSE, stringsAsFactors = TRUE,
+        dec = ".", check.names = FALSE, comment.char = ""))
     )
   }
 
@@ -494,7 +495,7 @@ create_itol_files <- function(infiles, opt) {
     )
     outfile <- itol_filename(name, "treecolors", outdir)
     print_itol(outfile, "TREE_COLORS", annotation,
-      ids, "range", annotation$LEGEND_COLORS[x], x)
+      ids, "range", get("LEGEND_COLORS", annotation)[x], x)
   }
 
 
@@ -582,7 +583,7 @@ create_itol_files <- function(infiles, opt) {
       ))
       outfile <- itol_filename(name, "colorstrip", outdir)
       print_itol(outfile, "DATASET_COLORSTRIP", annotation,
-        ids, annotation$LEGEND_COLORS[x], x)
+        ids, get("LEGEND_COLORS", annotation)[x], x)
 
     }
   }
@@ -705,7 +706,8 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_LABELS = legend_range(x, precision),
       MAXIMUM_SIZE = maxsize
     )
-    xclrs <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
+    xclrs <- plotrix::color.scale(x = x,
+      extremes = get("LEGEND_COLORS", annotation))
     mask <- mask_if_requested(x, cutoff, restriction)
     if (any(mask)) {
       x[mask] <- NA_real_
@@ -921,19 +923,21 @@ create_itol_files <- function(infiles, opt) {
   assert_R_version()
 
   # assignment of input colour vectors is solely by vector length
-  for (clrs in read_colour_vectors(opt$`colour-file`))
+  for (clrs in read_colour_vectors(get("colour-file", opt)))
     COLOURS[[length(clrs)]] <- clrs
 
   assert_colour_vectors()
 
   for (infile in infiles)
     # note that read_file() is supposed to return a list of data frames
-    lapply(X = read_file(infile, opt), FUN = itol_files, bcol = opt$background,
-      precision = opt$precision, lcol = opt$label, icol = opt$identifier,
-      scol = opt$emblems, idpat = opt$template, maxsize = opt$`max-size`,
-      favour = opt$favour, outdir = opt$directory, strict = opt$abort,
-      jcol = opt$identifier2, convint = opt$conversion,
-      borwid = opt$width, restrict = opt$restrict)
+    lapply(X = read_file(infile, opt), FUN = itol_files,
+      bcol = get("background", opt), precision = get("precision", opt),
+      lcol = get("label", opt), icol = get("identifier", opt),
+      scol = get("emblems", opt), idpat = get("template", opt),
+      maxsize = get("max-size", opt), favour = get("favour", opt),
+      outdir = get("directory", opt), strict = get("abort", opt),
+      jcol = get("identifier2", opt), convint = get("conversion", opt),
+      borwid = get("width", opt), restrict = get("restrict", opt))
 
   invisible(NULL)
 
