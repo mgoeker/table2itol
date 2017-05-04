@@ -45,8 +45,9 @@ First, obtain the script as indicated on its GitHub page.
 
 ### Command-line use
 
-The following explanations are for *non-experts*; there is nothing special with
-running this script. If necessary make the script executable:
+The following explanations are for *non-experts*; there is nothing special with 
+running this script in command-line mode on UNIX-like systems. First, if
+necessary make the script executable:
 
 `chmod +x table2itol.R`
 
@@ -102,17 +103,20 @@ create_itol_files(args, options)
 ```
 
 The analogy should be obvious, hence for details on the values of `options` just
-see the help message. With some basic knowledge of R is easy to set up
-customized scripts that modify `options` for your input files and generate the
-intended output.
+see the help message. With some basic knowledge of R is easy to set up 
+customized scripts that modify `options` for your input files and generate the 
+intended output. Note that it is an error if any of the elements of `options` is
+missing. However, all default components can be replaced by a suitable 
+alternative.
 
 ## Examples
 
 Exemplars for input table files are found within the `tests/INPUT` folder. A
 list of examples for calling `table2itol.R` is found in `tests/examples.txt`.
 
-*Experts only*: On a UNIX-like system you can run these examples by calling
-`tests/run_tests.sh` provided a modern Bash is installed.
+*Experts only*: On a UNIX-like system you can run these examples by calling 
+`tests/run_tests.sh` provided a modern
+[Bash](https://www.gnu.org/software/bash/) is installed.
 
 ## Troubleshooting
 
@@ -254,9 +258,9 @@ For replacing the default colour vectors by other colour vectors, use the
 [YAML](http://yaml.org/) format. The `tests/INPUT` folder contains an example
 file with user-defined colours.
 
-Names of the colour vectors are optional in such files but increase readability.
-Not all colour vectors need to be defined, only those that should replace
-certain default colour vectors. Assignment is solely by vector length.
+Names for the colour vectors are optional in such files but increase
+readability. Not all colour vectors need to be defined, only those that should
+replace certain default colour vectors. Assignment is solely by vector length.
 
 An attempt is made to standardize the input colours, yielding hexadecimal codes 
 understood by iTOL. Thus all kinds of colour specifications can be used that are
