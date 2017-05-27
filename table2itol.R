@@ -359,7 +359,7 @@ create_itol_files <- function(infiles, opt) {
   # We add white at the end, assuming this represents NA, when NA values occur.
   #
   select_colours <- function(size, hasna) {
-    if (hasna)  {
+    if (hasna) {
       message(sprintf("Fetching %i colour(s) ...", size - 1L))
       if (size < 2L)
         WHITE
@@ -418,10 +418,10 @@ create_itol_files <- function(infiles, opt) {
   # Used to modify several vectors at once. Needs at least one argument.
   #
   coordinated_na_removal <- function(...) {
-    args <- list(...)
-    ok <- !is.na(args[[1L]])
+    ok <- !is.na(..1)
     if (all(ok))
       return(FALSE)
+    args <- list(...)
     names(args) <- all.names(match.call(), FALSE, -1L, FALSE)
     p <- parent.frame()
     for (name in unique.default(names(args)))
@@ -473,7 +473,7 @@ create_itol_files <- function(infiles, opt) {
     kind <- switch(
       EXPR = title,
       branchsymbols = "DATASET_SYMBOL",
-      labelling = "LABELS",
+      labels = "LABELS",
       treecolors = "TREE_COLORS",
       binary =,
       colorstrip =,
@@ -500,7 +500,7 @@ create_itol_files <- function(infiles, opt) {
   #
   emit_itol_labeltexts <- function(x, ids, name, outdir, ...) {
     coordinated_na_removal(x, ids)
-    print_itol(outdir, "labelling", name, ids, x)
+    print_itol(outdir, "labels", name, ids, x)
   }
 
 
@@ -1069,7 +1069,7 @@ parser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog : script for converting spreadsheet files to iTOL input.",
+%prog: converting spreadsheet files to iTOL input, version 1.0.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
