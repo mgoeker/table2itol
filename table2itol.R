@@ -975,7 +975,7 @@ create_itol_files <- function(infiles, opt) {
 #
 
 
-parser <- optparse::OptionParser(option_list = list(
+optionparser <- optparse::OptionParser(option_list = list(
 
   optparse::make_option(c("-a", "--abort"), action = "store_true",
     help = paste("Abort if a requested column cannot be found instead of",
@@ -1069,7 +1069,7 @@ parser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.0.0",
+%prog: converting spreadsheet files to iTOL input, version 1.1.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -1094,8 +1094,8 @@ EXAMPLES:
 "
 )
 
-invisible(list2env(optparse::parse_args(parser,
-  commandArgs(TRUE), TRUE, TRUE), globalenv()))
+invisible(list2env(optparse::parse_args(optionparser,
+  commandArgs(TRUE), TRUE, TRUE), environment()))
 
 
 ################################################################################
@@ -1104,8 +1104,9 @@ invisible(list2env(optparse::parse_args(parser,
 if (length(args)) {
   create_itol_files(args, options)
 } else {
-  optparse::print_help(parser)
-  if (interactive())
+  optparse::print_help(optionparser)
+  if (interactive()) {
+    rm(optionparser)
     message("
 ********************************************************************************
 
@@ -1117,8 +1118,9 @@ create_itol_files(args, options)
 
 ********************************************************************************
     ")
-  else
+  } else {
     quit("no", 1L)
+  }
 }
 
 
