@@ -253,6 +253,18 @@ create_itol_files <- function(infiles, opt) {
   GENERATED_FILES <- new.env(TRUE, emptyenv())
 
 
+  # Note that type.convert() does not recognize some spellings of false/true.
+  # The value for TRUE must be the first one of each two-element vector.
+  #
+  BINARY_VALUE_SPELLINGS <- list(
+    c("y", "n"),
+    c("t", "f"),
+    c("true", "false"),
+    c("yes", "no"),
+    c("on", "off")
+  )
+
+
   ## Helper functions
 
 
@@ -619,19 +631,28 @@ create_itol_files <- function(infiles, opt) {
 
   # Integer vectors yield a bar chart.
   #
-  emit_itol_integer <- function(x, ids, name, outdir, ...) {
+  emit_itol_integer <- function(x, ids, name, outdir, precision, ...) {
+    if (!is.object(x)) # then we can assume it is really an integer vector
+      precision <- NULL
     coordinated_na_removal(x, ids)
     annotation <- list(
       COLOR = BLACK,
       DATASET_LABEL = name,
       LEGEND_COLORS = BLACK,
-      LEGEND_LABELS = paste0(legend_range(x, NULL), collapse = ", "),
+      LEGEND_LABELS = paste0(legend_range(x, precision), collapse = ", "),
       LEGEND_SHAPES = 1L,
       LEGEND_TITLE = pretty_str(name),
       MARGIN = 5,
       WIDTH = 200
     )
     print_itol(outdir, "simplebar", annotation, ids, x)
+  }
+
+
+  # For treating vectors of mode 'double' like integers.
+  #
+  emit_itol_pseudointeger <- function(...) {
+    emit_itol_integer(...)
   }
 
 
@@ -746,7 +767,7 @@ create_itol_files <- function(infiles, opt) {
   # Useful when R does not get the type right because of special notations;
   # also for user-defined type modifications.
   #
-  fix_column_types <- function(x, convint) {
+  fix_column_types <- function(x, convint, convdbl) {
 
     # convert binary integer vectors to logical vectors
     for (i in which(vapply(x, is.integer, NA)))
@@ -756,13 +777,19 @@ create_itol_files <- function(infiles, opt) {
     # convert factors to logical vectors if values look like boolean values
     for (i in which(vapply(x, is.factor, NA))) {
       values <- tolower(levels.default(x[, i]))
-      if (all(is.element(values, c("y", "n"))))
-        x[, i] <- tolower(x[, i]) == "y"
-      else if (all(is.element(values, c("yes", "no"))))
-        x[, i] <- tolower(x[, i]) == "yes"
-      else if (all(is.element(values, c("on", "off"))))
-        x[, i] <- tolower(x[, i]) == "on"
+      truevalue <- NA_character_
+      for (spelling in BINARY_VALUE_SPELLINGS)
+        if (all(is.element(values, spelling))) {
+          truevalue <- spelling[[1L]]
+          break
+        }
+      if (!is.na(truevalue))
+        x[, i] <- tolower(x[, i]) == truevalue
     }
+
+    if (convdbl)
+      for (i in which(vapply(x, is.double, NA)))
+        class(x[, i]) <- "pseudointeger"
 
     # convert integers and logical vectors to other data types if requested
     switch(
@@ -859,7 +886,7 @@ create_itol_files <- function(infiles, opt) {
   # The main function, taking care of all columns of data frame 'x'.
   #
   itol_files <- function(x, lcol, bcol, icol, jcol, scol, idpat, precision,
-      maxsize, favour, strict, convint, outdir, borwid, restrict) {
+      maxsize, favour, strict, convint, convdbl, outdir, borwid, restrict) {
 
     # identifier column (mandatory in strict mode), step 1
     idpos <- get_col(icol, x, strict)
@@ -877,7 +904,7 @@ create_itol_files <- function(infiles, opt) {
       return(invisible(FALSE))
     }
 
-    x <- fix_column_types(x, convint)
+    x <- fix_column_types(x, convint, convdbl)
 
     # must be done before the first use of 'outdir'
     if (!dir.exists(outdir))
@@ -962,7 +989,8 @@ create_itol_files <- function(infiles, opt) {
       maxsize = get("max-size", opt), favour = get("favour", opt),
       outdir = get("directory", opt), strict = get("abort", opt),
       jcol = get("identifier2", opt), convint = get("conversion", opt),
-      borwid = get("width", opt), restrict = get("restrict", opt))
+      convdbl = get("double-to-bars", opt), borwid = get("width", opt),
+      restrict = get("restrict", opt))
 
   invisible(NULL)
 
@@ -996,6 +1024,11 @@ optionparser <- optparse::OptionParser(option_list = list(
     help = paste("File in YAML format defining alternative colour vectors",
       "[default: %default]"),
     metavar = "FILE", default = ""),
+
+  optparse::make_option(c("-d", "--double-to-bars"), action = "store_true",
+    help = paste("Create bar charts, not gradients, from numbers",
+      "with decimal points ('double') [default: %default]"),
+    default = FALSE),
 
   optparse::make_option(c("-D", "--directory"), type = "character",
     help = paste("Place output files in this directory ('.' means working",
@@ -1069,7 +1102,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.1.0",
+%prog: converting spreadsheet files to iTOL input, version 1.2.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
