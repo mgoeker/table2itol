@@ -318,11 +318,24 @@ create_itol_files <- function(infiles, opt) {
   read_file <- function(file, opt) {
 
     read_xl <- function(sheet, path, na) {
-      tryCatch(expr = readxl::read_excel(path = path, na = na, sheet = sheet,
-        col_names = TRUE, col_types = NULL, skip = 0L), error = function(e) {
+      # for some reason read_excel() yields a 'tibble' instead of a data frame,
+      # which does not display the same behaviour of `[`; hence we convert
+      tryCatch(expr = as.data.frame(readxl::read_excel(path = path, na = na,
+        sheet = sheet, col_names = TRUE, col_types = NULL, skip = 0L,
+        trim_ws = FALSE)), error = function(e) {
           warning(e) # a typical error is to encounter an empty sheet
           data.frame() # now we can treat this later on ourselves
         })
+    }
+
+    rescue_integers <- function(x) { # necessary for 'tibble' input
+      iswholenumber <- function(x, tol = .Machine$double.eps ^ 0.5) {
+        all(is.na(x) | abs(x - round(x)) < tol)
+      }
+      for (i in which(vapply(x, is.double, NA)))
+        if (iswholenumber(x[, i]))
+          storage.mode(x[, i]) <- "integer"
+      x
     }
 
     rescue_factors <- function(x) { # not necessary for CSV input
@@ -344,8 +357,8 @@ create_itol_files <- function(infiles, opt) {
         col_types = NULL, formula_as_formula = FALSE, skip = 0L, range = NULL),
         rescue_factors),
       xls =,
-      xlsx = lapply(lapply(readxl::excel_sheets(file), read_xl, file,
-        na[[1L]]), rescue_factors),
+      xlsx = lapply(lapply(lapply(readxl::excel_sheets(file),
+        read_xl, file, na), rescue_integers), rescue_factors),
       list(read.table(file = file, header = TRUE, sep = sep, quote = "\"",
         na.strings = na, fill = FALSE, stringsAsFactors = TRUE,
         dec = ".", check.names = FALSE, comment.char = ""))
@@ -1102,7 +1115,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.2.0",
+%prog: converting spreadsheet files to iTOL input, version 1.2.1",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
