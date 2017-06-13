@@ -89,7 +89,7 @@ you are running it in interactive mode. When doing so, you might need to modify
 the `options` variable much like command-line users might need to apply certain
 command-line options. For instance, in analogy to entering:
 
-`./table2itol.R --identifier Tip --label Name annotation.tsv`
+`./table2itol.R --na-strings X --identifier Tip --label Name annotation.tsv`
 
 on the command line of a UNIX-like system, you would enter within R the
 following:
@@ -98,6 +98,7 @@ following:
 source("table2itol.R")
 options$identifier <- "Tip"
 options$label <- "Name"
+options$`na-strings` <- "X"
 args <- "annotation.tsv"
 create_itol_files(args, options)
 ```
@@ -251,6 +252,13 @@ name of each output file is generated from the name of the respective input
 column *and* the resulting kind of visualisation, nothing of importance will be
 overwritten (but see the section on name clashes between distinct spreadsheets).
 
+#### How can I generate other kinds of visualisation from non-integer numbers?
+
+You can create bar charts instead of gradients from numbers with decimal points
+by using the `--double-to-bars` option. Note that the number of decimal points
+of the range as shown in the legend can be modified using the `--precision`
+option, as usual.
+
 #### How can I define my own colour vectors?
 
 For replacing the default colour vectors by other colour vectors, use the 
@@ -269,3 +277,11 @@ an error. Call `colors()` to obtain the list of human-readable colour names
 accepted by R. You might also want to visit the 
 [colorbrewer](http://colorbrewer2.org) web site for generating useful colour 
 vectors.
+
+#### How can I distinctly assign symbols?
+
+For assigning symbols (to be used in combinations of symbols and colours)
+according to certain groups, use the `--emblems` option. This does not
+individually assign symbols but the symbols will then be consistently assigned
+according to some column. For triggering the earlier use of symbols (instead of
+using more colours), play around with `--favour` and `--max-size`.
