@@ -285,3 +285,20 @@ according to certain groups, use the `--emblems` option. This does not
 individually assign symbols but the symbols will then be consistently assigned
 according to some column. For triggering the earlier use of symbols (instead of
 using more colours), play around with `--favour` and `--max-size`.
+
+#### How can I assign specific colours to binary data?
+
+Binary data are interpreted by the script either as factors with two levels or 
+as logical vectors. Logical vectors yield distinct kinds of output files, and 
+the script already picks distinct colours and symbols for distinct logical 
+vectors in turn. To get columns understood as logical vectors their fields must
+(in addition to NA values, if any) only contain values from one of the following
+pairs: `0`/`1`, `true`/`false`, `t`/`f`, `yes`/`no`, `y`/`n` or `on`/`off`. Case
+differences do not matter, but you cannot mix any of these variants.
+
+Colours defined using `--colour-file` only play a role for columns treated as 
+factor, logical vector. To set the colours used for end points as gradients as 
+well as for binary data, use the `--gradient-file` argument. In contrast, one 
+cannot modify the symbols used; this would not make much sense though, since
+iTOL understands only certain symbols anyway.
+

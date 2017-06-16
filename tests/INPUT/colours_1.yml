@@ -2,7 +2,9 @@
 # Names of the colour vectors are optional but increase readability. Not all
 # colour vectors need to be defined, only those that should replace default
 # colour vectors. An attempt is made to standardize the input colours, yielding
-# hexadecimal codes (such as the ones listed below).
+# hexadecimal codes (such as the ones listed below). You could use readable
+# names such as 'blue', 'green' etc. instead; they just need to tbe understood
+# by R.
 #
 COLOURS05:
 - '#fb9a99'

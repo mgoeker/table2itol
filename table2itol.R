@@ -72,7 +72,8 @@ create_itol_files <- function(infiles, opt) {
   WHITE <- "#FFFFFF"
 
 
-  # Used as end points of colour gradients, with white as other end point.
+  # Used as end points of colour gradients, with white as other end point,
+  # and for colouring binary data (logical vectors)
   #
   SPECIAL_COLORS <- c("#1f78b4", "#e31a1c", "#33a02c", "#b15928",
     "#6a3d9a", "#ff7f00")
@@ -296,7 +297,7 @@ create_itol_files <- function(infiles, opt) {
 
   # For input of user-defined colour vectors.
   #
-  read_colour_vectors <- function(file) {
+  read_colour_vectors <- function(file, upto) {
     standard_colour <- function(x) {
       x <- grDevices::col2rgb(x, TRUE)
       tolower(grDevices::rgb(x[1L, ], x[2L, ], x[3L, ], x[4L, ], NULL, 255L))
@@ -307,7 +308,7 @@ create_itol_files <- function(infiles, opt) {
     if (!is.list(x))
       x <- list(x)
     n <- lengths(x)
-    lapply(x[n > 0L & n <= length(COLOURS)], standard_colour)
+    lapply(x[n > 0L & n <= upto], standard_colour)
   }
 
 
@@ -988,10 +989,14 @@ create_itol_files <- function(infiles, opt) {
   opt <- as.environment(opt)
 
   # assignment of input colour vectors is solely by vector length
-  for (clrs in read_colour_vectors(get("colour-file", opt)))
+  for (clrs in read_colour_vectors(get("colour-file", opt), length(COLOURS)))
     COLOURS[[length(clrs)]] <- clrs
 
   assert_colour_vectors()
+
+  # any length allowed, last one wins
+  for (clrs in read_colour_vectors(get("gradient-file", opt), Inf))
+    SPECIAL_COLORS <- clrs
 
   for (infile in infiles)
     # note that read_file() is supposed to return a list of data frames
@@ -1035,7 +1040,7 @@ optionparser <- optparse::OptionParser(option_list = list(
 
   optparse::make_option(c("-C", "--colour-file"), type = "character",
     help = paste("File in YAML format defining alternative colour vectors",
-      "[default: %default]"),
+      "for domain output [default: %default]"),
     metavar = "FILE", default = ""),
 
   optparse::make_option(c("-d", "--double-to-bars"), action = "store_true",
@@ -1057,6 +1062,11 @@ optionparser <- optparse::OptionParser(option_list = list(
     help = paste("Numeric factor for favouring colours over symbols",
       "(higher => more colours relative to symbols) [default: %default]"),
     metavar = "NUMBER", default = 1),
+
+  optparse::make_option(c("-G", "--gradient-file"), type = "character",
+    help = paste("File in YAML format defining alternative colours",
+      "for gradient and binary output [default: %default]"),
+    metavar = "FILE", default = ""),
 
   optparse::make_option(c("-h", "--help"), action = "store_true",
     help = paste("Show this help message, then exit [default: %default]"),
@@ -1115,7 +1125,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.2.1",
+%prog: converting spreadsheet files to iTOL input, version 1.3.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
