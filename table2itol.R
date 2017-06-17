@@ -1137,16 +1137,16 @@ USE OF DATA TYPES:
 
 character, integer, logical -> factor -> iTOL domains
 integer -> double -> iTOL gradient
-integer -> iTOL simplebar
+integer, double -> iTOL simplebar
 logical -> iTOL binary
 
 EXAMPLES:
 
-# set just the most relevant columns:
-'%prog -i Genome_ID -l Strain -b Phylum annotation.tsv'
-
-# prepend 'T' to ID column 'Genome_ID', which contains integers:
+# Set identifier, label and label background column; also prepend
+# 'T' to ID column 'Genome_ID' (which must contain integers):
 '%prog -i Genome_ID -l Strain -b Phylum -t T%i annotation.tsv'
+
+For more examples see the test folder and the FAQ.
 "
 )
 
