@@ -271,7 +271,7 @@ create_itol_files <- function(infiles, opt) {
 
   # E.g. anyNA() is only available from 3.1.0 on.
   #
-  assert_R_version <- function(wanted = numeric_version("3.2.0")) {
+  check_R_version <- function(wanted = numeric_version("3.2.0")) {
     if (getRversion() < wanted)
       stop(sprintf("need a newer version of R, %s or higher", wanted))
     invisible(TRUE)
@@ -280,8 +280,8 @@ create_itol_files <- function(infiles, opt) {
 
   # Checking makes sense because colour vectors can be user-defined.
   #
-  assert_colour_vectors <- function(x = COLOURS) {
-    if (!identical(seq_along(x), lengths(x, FALSE)))
+  check_colour_vectors <- function(x, lengthcheck) {
+    if (lengthcheck && !identical(seq_along(x), lengths(x, FALSE)))
       stop("incorrectly arranged colour vectors")
     bad <- !vapply(x, is.character, NA)
     if (any(bad))
@@ -330,11 +330,11 @@ create_itol_files <- function(infiles, opt) {
     }
 
     rescue_integers <- function(x) { # necessary for 'tibble' input
-      iswholenumber <- function(x, tol = .Machine$double.eps ^ 0.5) {
-        all(is.na(x) | abs(x - round(x)) < tol)
+      is_whole_number <- function(x, tolerance = .Machine$double.eps ^ 0.5) {
+        all(is.na(x) | abs(x - round(x)) < tolerance) # see ?is.integer
       }
       for (i in which(vapply(x, is.double, NA)))
-        if (iswholenumber(x[, i]))
+        if (is_whole_number(x[, i]))
           storage.mode(x[, i]) <- "integer"
       x
     }
@@ -408,7 +408,7 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # We assume NA has already been removed.
+  # We assume NA values have already been removed.
   #
   legend_range <- function(x, precision) {
     if (length(precision))
@@ -449,9 +449,9 @@ create_itol_files <- function(infiles, opt) {
       return(FALSE)
     args <- list(...)
     names(args) <- all.names(match.call(), FALSE, -1L, FALSE)
-    p <- parent.frame()
+    parentframe <- parent.frame()
     for (name in unique.default(names(args)))
-      assign(name, args[[name]][ok], p)
+      assign(name, args[[name]][ok], parentframe)
     TRUE
   }
 
@@ -984,19 +984,19 @@ create_itol_files <- function(infiles, opt) {
 
   }
 
-  assert_R_version()
+  check_R_version()
 
   opt <- as.environment(opt)
 
   # assignment of input colour vectors is solely by vector length
   for (clrs in read_colour_vectors(get("colour-file", opt), length(COLOURS)))
     COLOURS[[length(clrs)]] <- clrs
-
-  assert_colour_vectors()
+  check_colour_vectors(COLOURS, TRUE)
 
   # any length allowed, last one wins
   for (clrs in read_colour_vectors(get("gradient-file", opt), Inf))
     SPECIAL_COLORS <- clrs
+  check_colour_vectors(SPECIAL_COLORS, FALSE)
 
   for (infile in infiles)
     # note that read_file() is supposed to return a list of data frames
@@ -1125,7 +1125,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.3.0",
+%prog: converting spreadsheet files to iTOL input, version 1.4.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
