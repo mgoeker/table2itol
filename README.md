@@ -299,8 +299,8 @@ pairs: `0`/`1`, `true`/`false`, `t`/`f`, `yes`/`no`, `y`/`n` or `on`/`off`. Case
 differences do not matter, but you cannot mix any of these variants.
 
 Colours defined using `--colour-file` only play a role for columns treated as 
-factor, logical vector. To set the colours used for end points as gradients as 
-well as for binary data, use the `--gradient-file` argument. In contrast, one 
-cannot modify the symbols used; this would not make much sense though, since
-iTOL understands only certain symbols anyway.
+factor, not for those yielding a logical vector. To set the colours used for end
+points as gradients as well as for binary data, use the `--gradient-file`
+argument. In contrast, one cannot modify the symbols used; this would not make
+much sense though, since iTOL understands only certain symbols anyway.
 
