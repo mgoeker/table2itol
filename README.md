@@ -117,7 +117,9 @@ list of examples for calling `table2itol.R` is found in `tests/examples.txt`.
 
 *Experts only*: On a UNIX-like system you can run these examples by calling 
 `tests/run_tests.sh` provided a modern
-[Bash](https://www.gnu.org/software/bash/) is installed.
+[Bash](https://www.gnu.org/software/bash/) is installed. The versions of R and
+the R packages used for testing by the maintainer are found in the file 
+`tests/R_settings.txt`.
 
 ## Troubleshooting
 
