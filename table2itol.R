@@ -63,6 +63,12 @@ create_itol_files <- function(infiles, opt) {
   BRANCH_SYMBOLS <- seq_len(5L)
 
 
+  # Like branch symbols. We omit #6 (check mark) because it does not display
+  # nicely.
+  #
+  BINARY_SYMBOLS <- seq_len(5L)
+
+
   BLACK <- "#000000"
 
 
@@ -975,7 +981,7 @@ create_itol_files <- function(infiles, opt) {
     clrs <- assort(SPECIAL_COLORS, klass)
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
       fun = lapply(sprintf("emit_itol_%s", klass), match.fun), endcolor = clrs,
-      bincolor = clrs, binsymbol = assort(seq_along(SYMBOLS), klass),
+      bincolor = clrs, binsymbol = assort(seq_along(BINARY_SYMBOLS), klass),
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
         symbols = symbols, maxclrs = maxsize, favour = favour,
         borwid = borwid), SIMPLIFY = FALSE, USE.NAMES = FALSE)
@@ -1125,7 +1131,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.4.0",
+%prog: converting spreadsheet files to iTOL input, version 1.4.1",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
