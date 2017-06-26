@@ -24,19 +24,14 @@
 ################################################################################
 
 
-options(warn = 1L)
-
-
-################################################################################
-
-
 # Main function, does everything given a vector of file names 'infiles' and a
 # list of options 'opt'.
 #
 create_itol_files <- function(infiles, opt) {
 
 
-  ## Constants
+  OLDOPT <- options(warn = 1L)
+  on.exit(options(OLDOPT))
 
 
   # EL  ellipse
@@ -1131,7 +1126,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.4.1",
+%prog: converting spreadsheet files to iTOL input, version 1.4.2",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
