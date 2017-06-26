@@ -500,6 +500,7 @@ create_itol_files <- function(infiles, opt) {
     kind <- switch(
       EXPR = title,
       branchsymbols = "DATASET_SYMBOL",
+      collapse = "COLLAPSE",
       labels = "LABELS",
       treecolors = "TREE_COLORS",
       binary =,
@@ -725,36 +726,37 @@ create_itol_files <- function(infiles, opt) {
 
   # Not yet implemented.
   #
-  emit_branch_symbols_factor <- function(x, ids, name, outdir, ...) {
+  emit_branch_annotation_factor <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'factor' ...", name))
   }
 
 
   # Not yet implemented.
   #
-  emit_branch_symbols_integer <- function(x, ids, name, outdir, ...) {
+  emit_branch_annotation_integer <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'integer' ...", name))
   }
 
 
   # Should not occur in input.
   #
-  emit_branch_symbols_list <- function(x, ids, name, outdir, ...) {
+  emit_branch_annotation_list <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'list' ...", name))
   }
 
 
-  # Not yet implemented.
+  # Vectors of class 'logical' select subtrees to be collapsed.
   #
-  emit_branch_symbols_logical <- function(x, ids, name, outdir, ...) {
-    message(sprintf("Skipping column '%s' of mode 'logical' ...", name))
+  emit_branch_annotation_logical <- function(x, ids, name, outdir, ...) {
+    x[is.na(x)] <- FALSE
+    print_itol(outdir, "collapse", name, ids[x])
   }
 
 
   # Vectors of mode 'double' (of class 'numeric' in R) yield a colour gradient
   # within the branch symbols.
   #
-  emit_branch_symbols_numeric <- function(x, ids, name, outdir, symbol,
+  emit_branch_annotation_numeric <- function(x, ids, name, outdir, symbol,
       endcolor, branchpos, maxsize, precision, cutoff, restriction, ...) {
     coordinated_na_removal(x, ids)
     annotation <- list(
@@ -766,8 +768,8 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_LABELS = legend_range(x, precision),
       MAXIMUM_SIZE = maxsize
     )
-    xclrs <- plotrix::color.scale(x = x,
-      extremes = get("LEGEND_COLORS", annotation))
+    xclrs <- plotrix::color.scale(x = x, extremes = get("LEGEND_COLORS",
+      annotation))
     mask <- mask_if_requested(x, cutoff, restriction)
     if (any(mask)) {
       x[mask] <- NA_real_
@@ -834,11 +836,17 @@ create_itol_files <- function(infiles, opt) {
 
   # Helper function for itol_files().
   #
-  assort <- function(x, f) {
+  assort <- function(f, x) {
     idx <- split.default(seq_along(f), f)
-    result <- vector(typeof(x), length(f))
-    for (i in idx)
-      result[i] <- rep_len(x, length(i))
+    if (length(x)) {
+      result <- vector(typeof(x), length(f))
+      for (i in idx)
+        result[i] <- rep_len(x, length(i))
+    } else {
+      result <- vector("double", length(f))
+      for (i in idx)
+        result[i] <- seq_along(i) / (length(i) + 1L)
+    }
     result
   }
 
@@ -860,9 +868,9 @@ create_itol_files <- function(infiles, opt) {
   }
 
 
-  # Called by itol_files() instead of the main branch.
+  # Called by itol_files() instead of jumping to the main branch.
   #
-  branch_symbol_files <- function(x, icol, jcol, idpat, precision, outdir,
+  branch_annotation_files <- function(x, icol, jcol, idpat, precision, outdir,
       maxsize, restrict) {
 
     if (nzchar(restrict)) {
@@ -880,14 +888,16 @@ create_itol_files <- function(infiles, opt) {
     assert_no_forbidden_character("|", x[, idpos], x[, jpos])
     icol <- ifelse(is.na(x[, jpos]), sprintf(idpat, x[, idpos]),
       paste(sprintf(idpat, x[, idpos]), sprintf(idpat, x[, jpos]), sep = "|"))
+    x <- x[, -c(idpos, jpos), drop = FALSE]
+
+    klass <- vapply(x, class, "")
 
     # normal columns, dispatch done according to data type (class)
-    x <- x[, -c(idpos, jpos), drop = FALSE]
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
-      fun = lapply(sprintf("emit_branch_symbols_%s", vapply(x, class, "")),
-        match.fun), endcolor = rep_len(SPECIAL_COLORS, ncol(x)),
-      symbol = rep_len(BRANCH_SYMBOLS, ncol(x)), SIMPLIFY = FALSE,
-      branchpos = seq_along(x) / (ncol(x) + 1L), USE.NAMES = FALSE,
+      fun = lapply(sprintf("emit_branch_annotation_%s", klass), match.fun),
+      endcolor = assort(klass, SPECIAL_COLORS),
+      branchpos = assort(klass, NULL), SIMPLIFY = FALSE,
+      symbol = assort(klass, BRANCH_SYMBOLS), USE.NAMES = FALSE,
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
         maxsize = maxsize, cutoff = cutoff, restriction = restriction))
 
@@ -927,7 +937,7 @@ create_itol_files <- function(infiles, opt) {
 
     # generate branch symbols, skip normal run
     if (length(jcol) && all(nzchar(jcol)))
-      return(branch_symbol_files(x = x, icol = icol, jcol = jcol,
+      return(branch_annotation_files(x = x, icol = icol, jcol = jcol,
         idpat = idpat, precision = precision, outdir = outdir,
         maxsize = maxsize, restrict = restrict))
 
@@ -973,10 +983,10 @@ create_itol_files <- function(infiles, opt) {
     # normal columns, dispatch done according to data type (class)
     x <- x[, -c(idpos, lpos, cpos), drop = FALSE]
     klass <- vapply(x, class, "")
-    clrs <- assort(SPECIAL_COLORS, klass)
+    clrs <- assort(klass, SPECIAL_COLORS)
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
       fun = lapply(sprintf("emit_itol_%s", klass), match.fun), endcolor = clrs,
-      bincolor = clrs, binsymbol = assort(seq_along(BINARY_SYMBOLS), klass),
+      bincolor = clrs, binsymbol = assort(klass, seq_along(BINARY_SYMBOLS)),
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
         symbols = symbols, maxclrs = maxsize, favour = favour,
         borwid = borwid), SIMPLIFY = FALSE, USE.NAMES = FALSE)
@@ -1126,7 +1136,7 @@ optionparser <- optparse::OptionParser(option_list = list(
     metavar = "NUMBER", default = 0.5)
 
 ), add_help_option = FALSE, description = "
-%prog: converting spreadsheet files to iTOL input, version 1.4.2",
+%prog: converting spreadsheet files to iTOL input, version 1.5.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -1137,9 +1147,9 @@ FREQUENTLY NEEDED OPTIONS:
 USE OF DATA TYPES:
 
 character, integer, logical -> factor -> iTOL domains
-integer -> double -> iTOL gradient
-integer, double -> iTOL simplebar
-logical -> iTOL binary
+integer -> double -> iTOL gradient | iTOL branch symbols
+integer[, double] -> iTOL simplebar
+logical -> iTOL binary | iTOL collapsing instructions
 
 EXAMPLES:
 
