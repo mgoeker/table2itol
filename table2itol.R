@@ -24,10 +24,182 @@
 ################################################################################
 
 
-# Main function, does everything given a vector of file names 'infiles' and a
-# list of options 'opt'.
+# Option processing
 #
-create_itol_files <- function(infiles, opt) {
+optionparser <- optparse::OptionParser(option_list = list(
+
+  optparse::make_option(opt_str = c("-a", "--abort"), action = "store_true",
+    help = paste0("Abort if a requested column cannot be found instead of ",
+      "just skipping the data set [default: %default]"),
+    default = FALSE),
+
+  optparse::make_option(opt_str = c("-b", "--background"), type = "character",
+    help = paste0("Column to define the background colours of the tip labels; ",
+      "empty means no background colours [default: %default]"),
+    metavar = "NAME", default = ""),
+
+  optparse::make_option(opt_str = c("-c", "--conversion"), type = "character",
+    help = paste0("Convert integer columns to factors ('factor') or numbers ",
+      "with decimal points ('double') [default: %default]"),
+    metavar = "NAME", default = "none"),
+
+  optparse::make_option(opt_str = c("-C", "--colour-file"), type = "character",
+    help = paste0("File in YAML format defining alternative colour vectors ",
+      "for domain output [default: %default]"),
+    metavar = "FILE", default = ""),
+
+  optparse::make_option(opt_str = c("-d", "--double-to-bars"),
+    help = paste0("Create bar charts, not gradients, from numbers ",
+      "with decimal points ('double') [default: %default]"),
+    action = "store_true", default = FALSE),
+
+  optparse::make_option(opt_str = c("-D", "--directory"), type = "character",
+    help = paste0("Place output files in this directory ('.' means working ",
+      "directory) [default: %default]"),
+    metavar = "DIR", default = "."),
+
+  optparse::make_option(opt_str = c("-e", "--emblems"), type = "character",
+    help = paste0("Column to define symbol assignments; ignored if empty ",
+      "[default: %default]"),
+    metavar = "NAME", default = ""),
+
+  optparse::make_option(opt_str = c("-f", "--favour"), type = "numeric",
+    help = paste0("Numeric factor for favouring colours over symbols ",
+      "(higher => more colours relative to symbols) [default: %default]"),
+    metavar = "NUMBER", default = 1),
+
+  optparse::make_option(opt_str = c("-G", "--gradient-file"),
+    help = paste0("File in YAML format defining alternative colours ",
+      "for gradient and binary output [default: %default]"),
+    type = "character", metavar = "FILE", default = ""),
+
+  optparse::make_option(opt_str = c("-h", "--help"), action = "store_true",
+    help = "Show this help message, then exit [default: %default]",
+    default = FALSE),
+
+  optparse::make_option(opt_str = c("-i", "--identifier"), type = "character",
+    help = paste0("Mandatory identifier column; after modification ",
+      "as defined by --template this column must yield the tip labels of ",
+      "the tree [default: %default]"),
+    metavar = "NAME", default = "ID"),
+
+  optparse::make_option(opt_str = c("-j", "--identifier2"), type = "character",
+    help = paste0("Optional 2nd identifier column, causing output of branch",
+      "symbols; together with -i this identifies a node [default: %default]"),
+    metavar = "NAME", default = ""),
+
+  optparse::make_option(opt_str = c("-l", "--label"), type = "character",
+    help = paste0("Column to define the tip labels displayed in the picture ",
+      "in place of the tip labels found in the tree [default: %default]"),
+    metavar = "NAME", default = "Label"),
+
+  optparse::make_option(opt_str = c("-m", "--max-size"), type = "integer",
+    help = paste0("Exceeding this threshold causes fewer colours and more ",
+      "symbols to be selected (see also --favour); also determines size of ",
+      "branch symbols [default: %default]"),
+    metavar = "INTEGER", default = 20L),
+
+  optparse::make_option(opt_str = c("-n", "--na-strings"), type = "character",
+    help = paste0("Sentinels for missing input values; several can be ",
+      "provided, separated by the value of --separator [default: %default]"),
+    metavar = "TEXT", default = "\t(null)\tNA"),
+
+  optparse::make_option(opt_str = c("-p", "--precision"), type = "integer",
+    help = paste0("Number of decimal points used in the gradient legends ",
+      "[default: %default]"),
+    metavar = "INTEGER", default = 1L),
+
+  optparse::make_option(c("-r", "--restrict"), type = "character",
+    help = paste0("How to select from numeric values that yield branch ",
+      "symbols [default: %default]"),
+    metavar = "TEXT/NUMBER", default = ""),
+
+  optparse::make_option(opt_str = c("-s", "--separator"), type = "character",
+    help = paste0("Input column separator for CSV-like files ",
+      "[default: %default]"),
+    metavar = "CHARACTER", default = "\t"),
+
+  optparse::make_option(opt_str = c("-t", "--template"), type = "character",
+    help = paste0("Template for sprintf function to convert ID column when ",
+      "deviating from tip labels [default: %default]"),
+    metavar = "PATTERN", default = "%s"),
+
+  optparse::make_option(opt_str = c("-w", "--width"), type = "numeric",
+    help = paste0("Border with used for domains, colour strips etc. ",
+      "[default: %default]"),
+    metavar = "NUMBER", default = 0.5)
+
+), add_help_option = FALSE, prog = "table2itol.R",
+usage = "%prog [options] file1 file2 ...", description = "
+%prog: converting spreadsheet files to iTOL input, version 2.0.0",
+epilogue = "
+FREQUENTLY NEEDED OPTIONS:
+
+-i\tUnless name of tip identifier column happens to match default.
+-l\tUnless name of final tip label column happens to match default.
+-s\tUnless separator character happens to match default.
+
+USE OF DATA TYPES:
+
+character, integer, logical -> factor -> iTOL domains
+integer -> double -> iTOL gradient | iTOL branch symbols
+integer[, double] -> iTOL simplebar
+logical -> iTOL binary | iTOL collapsing instructions
+
+EXAMPLES:
+
+# Set identifier, label and label background column; also prepend
+# 'T' to ID column 'Genome_ID' (which must contain integers):
+'%prog -i Genome_ID -l Strain -b Phylum -t T%i annotation.tsv'
+
+For more examples see the test folder and the FAQ.
+"
+)
+
+invisible(list2env(optparse::parse_args(optionparser,
+  commandArgs(TRUE), TRUE, TRUE), environment()))
+
+
+################################################################################
+
+
+if (length(args) && !options$help) {
+  options$infiles <- args
+  options$help <- NULL
+  names(options) <- chartr("-", ".", names(options))
+} else {
+  optparse::print_help(optionparser)
+  if (interactive()) {
+    rm(optionparser, options, args)
+    message("
+********************************************************************************
+
+Apparently this script is running in interactive mode. You could now generate
+iTOL files by setting some 'infiles' variable to a vector of file names and then
+calling:
+
+create_itol_files(infiles)
+
+********************************************************************************
+    ")
+  } else {
+    quit("no", 1L)
+  }
+}
+
+
+################################################################################
+
+
+# Main function, does everything given a vector of file names 'infiles'. The
+# other arguments are optional.
+#
+create_itol_files <- function(infiles, identifier = "ID", label = "Label",
+    background = "", identifier2 = "", directory = ".", colour.file = "",
+    gradient.file = "", separator = "\t", na.strings = "\t(null)\tNA",
+    abort = FALSE, conversion = "none", double.to.bars = FALSE, emblems = "",
+    template = "%s", max.size = 20L, favour = 1, width = 0.5, precision = 1L,
+    restrict = "") {
 
 
   OLDOPT <- options(warn = 1L)
@@ -317,7 +489,7 @@ create_itol_files <- function(infiles, opt) {
   # for Excel and Libreoffice/Openoffice files, respectively.  Must ensure
   # character vectors are converted to factors.
   #
-  read_file <- function(file, opt) {
+  read_file <- function(file, sep, na) {
 
     read_xl <- function(sheet, path, na) {
       # for some reason read_excel() yields a 'tibble' instead of a data frame,
@@ -345,12 +517,6 @@ create_itol_files <- function(infiles, opt) {
         x[, i] <- factor(x[, i])
       x
     }
-
-    sep <- get("separator", opt)
-
-    na <- unlist(strsplit(get("na-strings", opt), sep, TRUE), FALSE, FALSE)
-    if (!length(na))
-      na <- ""
 
     switch(
       EXPR = tolower(tools::file_ext(file)),
@@ -554,7 +720,7 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_TITLE = pretty_str(name)
     )
     print_itol(outdir, "treecolors", annotation,
-      ids, "range", get("LEGEND_COLORS", annotation)[x], x)
+      ids, "range", annotation$LEGEND_COLORS[x], x)
   }
 
 
@@ -639,7 +805,7 @@ create_itol_files <- function(infiles, opt) {
         STRIP_WIDTH = 25
       ))
       print_itol(outdir, "colorstrip", annotation,
-        ids, get("LEGEND_COLORS", annotation)[x], x)
+        ids, annotation$LEGEND_COLORS[x], x)
 
     }
   }
@@ -768,8 +934,7 @@ create_itol_files <- function(infiles, opt) {
       LEGEND_LABELS = legend_range(x, precision),
       MAXIMUM_SIZE = maxsize
     )
-    xclrs <- plotrix::color.scale(x = x, extremes = get("LEGEND_COLORS",
-      annotation))
+    xclrs <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
     mask <- mask_if_requested(x, cutoff, restriction)
     if (any(mask)) {
       x[mask] <- NA_real_
@@ -997,198 +1162,35 @@ create_itol_files <- function(infiles, opt) {
 
   check_R_version()
 
-  opt <- as.environment(opt)
-
   # assignment of input colour vectors is solely by vector length
-  for (clrs in read_colour_vectors(get("colour-file", opt), length(COLOURS)))
+  for (clrs in read_colour_vectors(colour.file, length(COLOURS)))
     COLOURS[[length(clrs)]] <- clrs
   check_colour_vectors(COLOURS, TRUE)
 
   # any length allowed, last one wins
-  for (clrs in read_colour_vectors(get("gradient-file", opt), Inf))
+  for (clrs in read_colour_vectors(gradient.file, Inf))
     SPECIAL_COLORS <- clrs
   check_colour_vectors(SPECIAL_COLORS, FALSE)
 
+  na.strings <- unlist(strsplit(na.strings, separator, TRUE), FALSE, FALSE)
+  if (!length(na.strings))
+    na.strings <- ""
+
   for (infile in infiles)
     # note that read_file() is supposed to return a list of data frames
-    lapply(X = read_file(infile, opt), FUN = itol_files,
-      bcol = get("background", opt), precision = get("precision", opt),
-      lcol = get("label", opt), icol = get("identifier", opt),
-      scol = get("emblems", opt), idpat = get("template", opt),
-      maxsize = get("max-size", opt), favour = get("favour", opt),
-      outdir = get("directory", opt), strict = get("abort", opt),
-      jcol = get("identifier2", opt), convint = get("conversion", opt),
-      convdbl = get("double-to-bars", opt), borwid = get("width", opt),
-      restrict = get("restrict", opt))
+    lapply(X = read_file(infile, separator, na.strings), FUN = itol_files,
+      bcol = background, precision = precision, lcol = label, icol = identifier,
+      scol = emblems, idpat = template, maxsize = max.size, favour = favour,
+      outdir = directory, strict = abort, jcol = identifier2, borwid = width,
+      convint = conversion, convdbl = double.to.bars, restrict = restrict)
 
   invisible(NULL)
 
 }
 
 
-################################################################################
-#
-# Option processing
-#
-
-
-optionparser <- optparse::OptionParser(option_list = list(
-
-  optparse::make_option(opt_str = c("-a", "--abort"), action = "store_true",
-    help = paste0("Abort if a requested column cannot be found instead of ",
-      "just skipping the data set [default: %default]"),
-    default = FALSE),
-
-  optparse::make_option(opt_str = c("-b", "--background"), type = "character",
-    help = paste0("Column to define the background colours of the tip labels; ",
-      "empty means no background colours [default: %default]"),
-    metavar = "NAME", default = ""),
-
-  optparse::make_option(opt_str = c("-c", "--conversion"), type = "character",
-    help = paste0("Convert integer columns to factors ('factor') or numbers ",
-      "with decimal points ('double') [default: %default]"),
-    metavar = "NAME", default = "none"),
-
-  optparse::make_option(opt_str = c("-C", "--colour-file"), type = "character",
-    help = paste0("File in YAML format defining alternative colour vectors ",
-      "for domain output [default: %default]"),
-    metavar = "FILE", default = ""),
-
-  optparse::make_option(opt_str = c("-d", "--double-to-bars"),
-    help = paste0("Create bar charts, not gradients, from numbers ",
-      "with decimal points ('double') [default: %default]"),
-    action = "store_true", default = FALSE),
-
-  optparse::make_option(opt_str = c("-D", "--directory"), type = "character",
-    help = paste0("Place output files in this directory ('.' means working ",
-      "directory) [default: %default]"),
-    metavar = "DIR", default = "."),
-
-  optparse::make_option(opt_str = c("-e", "--emblems"), type = "character",
-    help = paste0("Column to define symbol assignments; ignored if empty ",
-      "[default: %default]"),
-    metavar = "NAME", default = ""),
-
-  optparse::make_option(opt_str = c("-f", "--favour"), type = "numeric",
-    help = paste0("Numeric factor for favouring colours over symbols ",
-      "(higher => more colours relative to symbols) [default: %default]"),
-    metavar = "NUMBER", default = 1),
-
-  optparse::make_option(opt_str = c("-G", "--gradient-file"),
-    help = paste0("File in YAML format defining alternative colours ",
-      "for gradient and binary output [default: %default]"),
-    type = "character", metavar = "FILE", default = ""),
-
-  optparse::make_option(opt_str = c("-h", "--help"), action = "store_true",
-    help = "Show this help message, then exit [default: %default]",
-    default = FALSE),
-
-  optparse::make_option(opt_str = c("-i", "--identifier"), type = "character",
-    help = paste0("Mandatory identifier column; after modification ",
-      "as defined by --template this column must yield the tip labels of ",
-      "the tree [default: %default]"),
-    metavar = "NAME", default = "ID"),
-
-  optparse::make_option(opt_str = c("-j", "--identifier2"), type = "character",
-    help = paste0("Optional 2nd identifier column, causing output of branch",
-      "symbols; together with -i this identifies a node [default: %default]"),
-    metavar = "NAME", default = ""),
-
-  optparse::make_option(opt_str = c("-l", "--label"), type = "character",
-    help = paste0("Column to define the tip labels displayed in the picture ",
-      "in place of the tip labels found in the tree [default: %default]"),
-    metavar = "NAME", default = "Label"),
-
-  optparse::make_option(opt_str = c("-m", "--max-size"), type = "integer",
-    help = paste0("Exceeding this threshold causes fewer colours and more ",
-      "symbols to be selected (see also --favour); also determines size of ",
-      "branch symbols [default: %default]"),
-    metavar = "INTEGER", default = 20L),
-
-  optparse::make_option(opt_str = c("-n", "--na-strings"), type = "character",
-    help = paste0("Sentinels for missing input values; several can be ",
-      "provided, separated by the value of --separator [default: %default]"),
-    metavar = "TEXT", default = "\t(null)\tNA"),
-
-  optparse::make_option(opt_str = c("-p", "--precision"), type = "integer",
-    help = paste0("Number of decimal points used in the gradient legends ",
-      "[default: %default]"),
-    metavar = "INTEGER", default = 1L),
-
-  optparse::make_option(c("-r", "--restrict"), type = "character",
-    help = paste0("How to select from numeric values that yield branch ",
-      "symbols [default: %default]"),
-    metavar = "TEXT/NUMBER", default = ""),
-
-  optparse::make_option(opt_str = c("-s", "--separator"), type = "character",
-    help = paste0("Input column separator for CSV-like files ",
-      "[default: %default]"),
-    metavar = "CHARACTER", default = "\t"),
-
-  optparse::make_option(opt_str = c("-t", "--template"), type = "character",
-    help = paste0("Template for sprintf function to convert ID column when ",
-      "deviating from tip labels [default: %default]"),
-    metavar = "PATTERN", default = "%s"),
-
-  optparse::make_option(opt_str = c("-w", "--width"), type = "numeric",
-    help = paste0("Border with used for domains, colour strips etc. ",
-      "[default: %default]"),
-    metavar = "NUMBER", default = 0.5)
-
-), add_help_option = FALSE, prog = "table2itol.R",
-usage = "%prog [options] file1 file2 ...", description = "
-%prog: converting spreadsheet files to iTOL input, version 1.6.0",
-epilogue = "
-FREQUENTLY NEEDED OPTIONS:
-
--i\tUnless name of tip identifier column happens to match default.
--l\tUnless name of final tip label column happens to match default.
--s\tUnless separator character happens to match default.
-
-USE OF DATA TYPES:
-
-character, integer, logical -> factor -> iTOL domains
-integer -> double -> iTOL gradient | iTOL branch symbols
-integer[, double] -> iTOL simplebar
-logical -> iTOL binary | iTOL collapsing instructions
-
-EXAMPLES:
-
-# Set identifier, label and label background column; also prepend
-# 'T' to ID column 'Genome_ID' (which must contain integers):
-'%prog -i Genome_ID -l Strain -b Phylum -t T%i annotation.tsv'
-
-For more examples see the test folder and the FAQ.
-"
-)
-
-invisible(list2env(optparse::parse_args(optionparser,
-  commandArgs(TRUE), TRUE, TRUE), environment()))
-
-
-################################################################################
-
-
-if (length(args) && !options$help) {
-  create_itol_files(args, options)
-} else {
-  optparse::print_help(optionparser)
-  if (interactive()) {
-    rm(optionparser)
-    message("
-********************************************************************************
-
-Apparently this script is running in interactive mode. You could now modify the
-'options' variable by hand, set the 'args' variable to a vector of file names,
-and then call:
-
-create_itol_files(args, options)
-
-********************************************************************************
-    ")
-  } else {
-    quit("no", 1L)
-  }
+if (!interactive()) {
+  do.call(create_itol_files, options)
 }
 
 

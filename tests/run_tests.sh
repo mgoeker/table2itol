@@ -37,6 +37,7 @@ function check_outdir
   local expdir outdir result empty infile
   declare -a words
   declare -i i
+  declare -i errors=0
 
   for infile; do
     if [ "$infile" = "$examples" ]; then
@@ -90,11 +91,15 @@ function check_outdir
         rm -f "$outdir"/* && rmdir "$outdir"
       fi
       echo "${words[@]// /\\ }" >> "$examples"
+    else
+      let errors+=1
     fi
 
     echo >&2
 
   done < "$@"
+
+  return $errors
 
 }
 
@@ -108,6 +113,17 @@ function check_outdir
 [ $# -eq 0 ] && [ -s tests.def ] && set -- tests.def
 
 
-[ $# -gt 0 ] && check_outdir examples.txt "$@"
+[ $# -gt 0 ] || exit 0
+
+
+if check_outdir examples.txt "$@"; then
+  echo "*** TESTS SUCCESSFUL ***"
+  echo
+  exit 0
+else
+  echo "*** TESTS FAILED ***"
+  echo
+  exit 1
+fi
 
 

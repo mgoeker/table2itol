@@ -24,7 +24,9 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
 ## Prerequisites
 
 * A recent version of [R](https://cran.r-project.org/).
-* The [optparse](https://CRAN.R-project.org/package=optparse) package for R.
+* The [optparse](https://CRAN.R-project.org/package=optparse) package for R if 
+  you want to run the script in non-interactive mode or if you want to read the
+  help message.
 * The [plotrix](https://CRAN.R-project.org/package=plotrix) package for R if
   you want to generate branch annotations from continuous numeric data.
 * The [readxl](https://CRAN.R-project.org/package=readxl) package for R if
@@ -84,31 +86,30 @@ provided the script is located in the current working directory as given by
 `getwd()`. Alternatively, first use `setwd()` to move to the directory in which
 `table2itol.R` resides or enter the full path to the location of the script.
 
-When loading the script it shows the usual help message and an indication that
-you are running it in interactive mode. When doing so, you might need to modify
-the `options` variable much like command-line users might need to apply certain
-command-line options. For instance, in analogy to entering:
+When loading the script it shows the usual help message and an indication that 
+you are running it in interactive mode. When doing so, you might need to modify 
+the arguments of the function much like command-line users might need to apply
+certain command-line options. For instance, in analogy to entering:
 
-`./table2itol.R --na-strings X --identifier Tip --label Name annotation.tsv`
+`./table2itol.R --na-strings X --identifier Tip --label Name ann1.tsv ann2.tsv`
 
 on the command line of a UNIX-like system, you would enter within R the
 following:
 
 ```R
 source("table2itol.R")
-options$identifier <- "Tip"
-options$label <- "Name"
-options$`na-strings` <- "X"
-args <- "annotation.tsv"
-create_itol_files(args, options)
+create_itol_files(infiles = c("ann1.tsv", "ann2.tsv"),
+  identifier = "Tip", label = "Name", na.strings = "X")
 ```
 
-The analogy should be obvious, hence for details on the values of `options` just
-see the help message. With some basic knowledge of R is easy to set up 
-customized scripts that modify `options` for your input files and generate the 
-intended output. Note that it is an error if any of the elements of `options` is
-missing. However, all default components can be replaced by a suitable 
-alternative.
+The analogy should be obvious, hence for details on the arguments of 
+`create_itol_files` see the help message. The arguments of the function are 
+identical to the long version of the arguments of the script, subjected to the 
+replacement of dashes by dots to yield syntatic names. The sole mandatory 
+argument of the function is `infiles`, whose value is identical to the
+positional arguments of the script. With some basic knowledge of R it is thus
+easy to set up customized scripts that set the arguments for your input files
+and generate the intended output.
 
 ## Examples
 
@@ -161,7 +162,7 @@ issue. There is plenty of online material available elsewhere.*
 
 Solution: Install the [optparse](https://CRAN.R-project.org/package=optparse)
 package for R. (It is not an absolute requirement in interactive mode but
-without it you would need to compile the `options` variable by hand.)
+without it you would not see the help message.)
 
 `there is no package called 'plotrix'`
 
@@ -212,12 +213,15 @@ without `--abort` the script generates warnings when data sets get skipped.
 
 #### The script generates too many output files
 
-Solution: Accept as a design decision that the scripts generates one file for
-each input column (except for the tip identifier column). Since you can still
-decide to not upload (some of) the generated files to iTOL and also deselect
+Solution: Accept as a design decision that the scripts generates one file for 
+each input column (except for the tip identifier column). Since you can still 
+decide to not upload (some of) the generated files to iTOL and also deselect 
 data sets within iTOL, we believe it would not make much sense to also include a
-selection mechanism within the `table2itol.R` script. As last resort you could
-also reduce the number of input columns.
+selection mechanism within the `table2itol.R` script. As last resort you could 
+also reduce the number of input columns. However, if you are mainly concerned 
+about the script cluttering up your working directory with files, simply
+consider using the `--directory` option to place all output files in a dedicated
+directory.
 
 #### A column is requested but missing
 
@@ -293,10 +297,12 @@ using more colours), play around with `--favour` and `--max-size`.
 Binary data are interpreted by the script either as factors with two levels or 
 as logical vectors. Logical vectors yield distinct kinds of output files, and 
 the script already picks distinct colours and symbols for distinct logical 
-vectors in turn. To get columns understood as logical vectors their fields must
+vectors in turn. To get columns understood as logical vectors their fields must 
 (in addition to NA values, if any) only contain values from one of the following
-pairs: `0`/`1`, `true`/`false`, `t`/`f`, `yes`/`no`, `y`/`n` or `on`/`off`. Case
-differences do not matter, but you cannot mix any of these variants.
+pairs: `0`/`1`, `true`/`false`, `t`/`f`, `yes`/`no`, `y`/`n` or `on`/`off`. This
+considerably extends the values recognized by base R as logical vectors on
+input. Moreover, case differences do not matter, but you cannot mix any of these
+variants.
 
 Colours defined using `--colour-file` only play a role for columns treated as 
 factor, not for those yielding a logical vector. To set the colours used for end
