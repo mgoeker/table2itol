@@ -105,7 +105,7 @@ create_itol_files(infiles = c("ann1.tsv", "ann2.tsv"),
 The analogy should be obvious, hence for details on the arguments of 
 `create_itol_files` see the help message. The arguments of the function are 
 identical to the long version of the arguments of the script, subjected to the 
-replacement of dashes by dots to yield syntatic names. The sole mandatory 
+replacement of dashes by dots to yield syntactic names. The sole mandatory 
 argument of the function is `infiles`, whose value is identical to the
 positional arguments of the script. With some basic knowledge of R it is thus
 easy to set up customized scripts that set the arguments for your input files
@@ -278,9 +278,9 @@ replace certain default colour vectors. Assignment is solely by vector length.
 
 An attempt is made to standardize the input colours, yielding hexadecimal codes 
 understood by iTOL. Thus all kinds of colour specifications can be used that are
-accepted by the `col2rgb` function. Uninterpretable and duplicate colours yield
-an error. Call `colors()` to obtain the list of human-readable colour names
-accepted by R. You might also want to visit the 
+accepted by the `col2rgb` function. Non-interpretable and duplicate colours
+yield an error. Call `colors()` to obtain the list of human-readable colour
+names accepted by R. You might also want to visit the 
 [colorbrewer](http://colorbrewer2.org) web site for generating useful colour 
 vectors.
 
