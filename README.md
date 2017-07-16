@@ -221,7 +221,8 @@ selection mechanism within the `table2itol.R` script. As last resort you could
 also reduce the number of input columns. However, if you are mainly concerned 
 about the script cluttering up your working directory with files, simply
 consider using the `--directory` option to place all output files in a dedicated
-directory.
+directory. An empty argument to this option causes the script to place every
+output file in the directory in which the respective inout file resides.
 
 #### A column is requested but missing
 

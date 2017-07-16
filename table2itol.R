@@ -55,7 +55,7 @@ optionparser <- optparse::OptionParser(option_list = list(
 
   optparse::make_option(opt_str = c("-D", "--directory"), type = "character",
     help = paste0("Place output files in this directory ('.' means working ",
-      "directory) [default: %default]"),
+      "directory, empty means input file directory) [default: %default]"),
     metavar = "DIR", default = "."),
 
   optparse::make_option(opt_str = c("-e", "--emblems"), type = "character",
@@ -131,7 +131,7 @@ optionparser <- optparse::OptionParser(option_list = list(
 
 ), add_help_option = FALSE, prog = "table2itol.R",
 usage = "%prog [options] file1 file2 ...", description = "
-%prog: converting spreadsheet files to iTOL input, version 2.0.0",
+%prog: converting spreadsheet files to iTOL input, version 2.1.0",
 epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -1181,8 +1181,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     lapply(X = read_file(infile, separator, na.strings), FUN = itol_files,
       bcol = background, precision = precision, lcol = label, icol = identifier,
       scol = emblems, idpat = template, maxsize = max.size, favour = favour,
-      outdir = directory, strict = abort, jcol = identifier2, borwid = width,
-      convint = conversion, convdbl = double.to.bars, restrict = restrict)
+      outdir = if (nzchar(directory)) directory else dirname(infile),
+      strict = abort, jcol = identifier2, borwid = width, restrict = restrict,
+      convint = conversion, convdbl = double.to.bars)
 
   invisible(NULL)
 
