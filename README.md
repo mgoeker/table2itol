@@ -26,7 +26,7 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
 * A recent version of [R](https://cran.r-project.org/).
 * The [optparse](https://CRAN.R-project.org/package=optparse) package for R if 
   you want to run the script in non-interactive mode or if you want to read the
-  help message.
+  help message (which is placed in `tests/table2itol_help.txt`, too).
 * The [plotrix](https://CRAN.R-project.org/package=plotrix) package for R if
   you want to generate branch annotations from continuous numeric data.
 * The [readxl](https://CRAN.R-project.org/package=readxl) package for R if
@@ -160,9 +160,10 @@ issue. There is plenty of online material available elsewhere.*
 
 `there is no package called 'optparse'`
 
-Solution: Install the [optparse](https://CRAN.R-project.org/package=optparse)
-package for R. (It is not an absolute requirement in interactive mode but
-without it you would not see the help message.)
+Solution: Install the [optparse](https://CRAN.R-project.org/package=optparse) 
+package for R. (It is not an absolute requirement in interactive mode but 
+without it you would not see the help message. However, this message is placed
+in `tests/table2itol_help.txt` anyway.)
 
 `there is no package called 'plotrix'`
 
