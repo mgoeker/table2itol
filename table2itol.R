@@ -26,113 +26,115 @@
 
 # Option processing
 #
-optionparser <- optparse::OptionParser(option_list = list(
+if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
-  optparse::make_option(opt_str = c("-a", "--abort"), action = "store_true",
-    help = paste0("Abort if a requested column cannot be found instead of ",
-      "just skipping the data set [default: %default]"),
-    default = FALSE),
+  optionparser <- optparse::OptionParser(option_list = list(
 
-  optparse::make_option(opt_str = c("-b", "--background"), type = "character",
-    help = paste0("Column to define the background colours of the tip labels; ",
-      "empty means no background colours [default: %default]"),
-    metavar = "NAME", default = ""),
+    optparse::make_option(opt_str = c("-a", "--abort"), action = "store_true",
+      help = paste0("Abort if a requested column cannot be found instead of ",
+        "just skipping the data set [default: %default]"),
+      default = FALSE),
 
-  optparse::make_option(opt_str = c("-c", "--conversion"), type = "character",
-    help = paste0("Convert integer columns to factors ('factor') or numbers ",
-      "with decimal points ('double') [default: %default]"),
-    metavar = "NAME", default = "none"),
+    optparse::make_option(opt_str = c("-b", "--background"), type = "character",
+      help = paste0("Column to define the background colours of the tip ",
+        "labels; empty means no background colours [default: %default]"),
+      metavar = "NAME", default = ""),
 
-  optparse::make_option(opt_str = c("-C", "--colour-file"), type = "character",
-    help = paste0("File in YAML format defining alternative colour vectors ",
-      "for domain output [default: %default]"),
-    metavar = "FILE", default = ""),
+    optparse::make_option(opt_str = c("-c", "--conversion"), type = "character",
+      help = paste0("Convert integer columns to factors ('factor') or numbers ",
+        "with decimal points ('double') [default: %default]"),
+      metavar = "NAME", default = "none"),
 
-  optparse::make_option(opt_str = c("-d", "--double-to-bars"),
-    help = paste0("Create bar charts, not gradients, from numbers ",
-      "with decimal points ('double') [default: %default]"),
-    action = "store_true", default = FALSE),
+    optparse::make_option(opt_str = c("-C", "--colour-file"),
+      help = paste0("File in YAML format defining alternative colour vectors ",
+        "for domain output [default: %default]"),
+      metavar = "FILE", default = "", type = "character"),
 
-  optparse::make_option(opt_str = c("-D", "--directory"), type = "character",
-    help = paste0("Place output files in this directory ('.' means working ",
-      "directory, empty means input file directory) [default: %default]"),
-    metavar = "DIR", default = "."),
+    optparse::make_option(opt_str = c("-d", "--double-to-bars"),
+      help = paste0("Create bar charts, not gradients, from numbers ",
+        "with decimal points ('double') [default: %default]"),
+      action = "store_true", default = FALSE),
 
-  optparse::make_option(opt_str = c("-e", "--emblems"), type = "character",
-    help = paste0("Column to define symbol assignments; ignored if empty ",
-      "[default: %default]"),
-    metavar = "NAME", default = ""),
+    optparse::make_option(opt_str = c("-D", "--directory"), type = "character",
+      help = paste0("Place output files in this directory ('.' means working ",
+        "directory, empty means input file directory) [default: %default]"),
+      metavar = "DIR", default = "."),
 
-  optparse::make_option(opt_str = c("-f", "--favour"), type = "numeric",
-    help = paste0("Numeric factor for favouring colours over symbols ",
-      "(higher => more colours relative to symbols) [default: %default]"),
-    metavar = "NUMBER", default = 1),
+    optparse::make_option(opt_str = c("-e", "--emblems"), type = "character",
+      help = paste0("Column to define symbol assignments; ignored if empty ",
+        "[default: %default]"),
+      metavar = "NAME", default = ""),
 
-  optparse::make_option(opt_str = c("-G", "--gradient-file"),
-    help = paste0("File in YAML format defining alternative colours ",
-      "for gradient and binary output [default: %default]"),
-    type = "character", metavar = "FILE", default = ""),
+    optparse::make_option(opt_str = c("-f", "--favour"), type = "numeric",
+      help = paste0("Numeric factor for favouring colours over symbols ",
+        "(higher => more colours relative to symbols) [default: %default]"),
+      metavar = "NUMBER", default = 1),
 
-  optparse::make_option(opt_str = c("-h", "--help"), action = "store_true",
-    help = "Show this help message, then exit [default: %default]",
-    default = FALSE),
+    optparse::make_option(opt_str = c("-G", "--gradient-file"),
+      help = paste0("File in YAML format defining alternative colours ",
+        "for gradient and binary output [default: %default]"),
+      type = "character", metavar = "FILE", default = ""),
 
-  optparse::make_option(opt_str = c("-i", "--identifier"), type = "character",
-    help = paste0("Mandatory identifier column; after modification ",
-      "as defined by --template this column must yield the tip labels of ",
-      "the tree [default: %default]"),
-    metavar = "NAME", default = "ID"),
+    optparse::make_option(opt_str = c("-h", "--help"), action = "store_true",
+      help = "Show this help message, then exit [default: %default]",
+      default = FALSE),
 
-  optparse::make_option(opt_str = c("-j", "--identifier2"), type = "character",
-    help = paste0("Optional 2nd identifier column, causing output of branch",
-      "symbols; together with -i this identifies a node [default: %default]"),
-    metavar = "NAME", default = ""),
+    optparse::make_option(opt_str = c("-i", "--identifier"), type = "character",
+      help = paste0("Mandatory identifier column; after modification ",
+        "as defined by --template this column must yield the tip labels of ",
+        "the tree [default: %default]"),
+      metavar = "NAME", default = "ID"),
 
-  optparse::make_option(opt_str = c("-l", "--label"), type = "character",
-    help = paste0("Column to define the tip labels displayed in the picture ",
-      "in place of the tip labels found in the tree [default: %default]"),
-    metavar = "NAME", default = "Label"),
+    optparse::make_option(opt_str = c("-j", "--identifier2"),
+      help = paste0("Optional 2nd identifier column, causing output of branch",
+        "symbols; together with -i this identifies a node [default: %default]"),
+      metavar = "NAME", default = "", type = "character"),
 
-  optparse::make_option(opt_str = c("-m", "--max-size"), type = "integer",
-    help = paste0("Exceeding this threshold causes fewer colours and more ",
-      "symbols to be selected (see also --favour); also determines size of ",
-      "branch symbols [default: %default]"),
-    metavar = "INTEGER", default = 20L),
+    optparse::make_option(opt_str = c("-l", "--label"), type = "character",
+      help = paste0("Column to define the tip labels displayed in the picture ",
+        "in place of the tip labels found in the tree [default: %default]"),
+      metavar = "NAME", default = "Label"),
 
-  optparse::make_option(opt_str = c("-n", "--na-strings"), type = "character",
-    help = paste0("Sentinels for missing input values; several can be ",
-      "provided, separated by the value of --separator [default: %default]"),
-    metavar = "TEXT", default = "\t(null)\tNA"),
+    optparse::make_option(opt_str = c("-m", "--max-size"), type = "integer",
+      help = paste0("Exceeding this threshold causes fewer colours and more ",
+        "symbols to be selected (see also --favour); also determines size of ",
+        "branch symbols [default: %default]"),
+      metavar = "INTEGER", default = 20L),
 
-  optparse::make_option(opt_str = c("-p", "--precision"), type = "integer",
-    help = paste0("Number of decimal points used in the gradient legends ",
-      "[default: %default]"),
-    metavar = "INTEGER", default = 1L),
+    optparse::make_option(opt_str = c("-n", "--na-strings"), type = "character",
+      help = paste0("Sentinels for missing input values; several can be ",
+        "provided, separated by the value of --separator [default: %default]"),
+      metavar = "TEXT", default = "\t(null)\tNA"),
 
-  optparse::make_option(c("-r", "--restrict"), type = "character",
-    help = paste0("How to select from numeric values that yield branch ",
-      "symbols [default: %default]"),
-    metavar = "TEXT/NUMBER", default = ""),
+    optparse::make_option(opt_str = c("-p", "--precision"), type = "integer",
+      help = paste0("Number of decimal points used in the gradient legends ",
+        "[default: %default]"),
+      metavar = "INTEGER", default = 1L),
 
-  optparse::make_option(opt_str = c("-s", "--separator"), type = "character",
-    help = paste0("Input column separator for CSV-like files ",
-      "[default: %default]"),
-    metavar = "CHARACTER", default = "\t"),
+    optparse::make_option(c("-r", "--restrict"), type = "character",
+      help = paste0("How to select from numeric values that yield branch ",
+        "symbols [default: %default]"),
+      metavar = "TEXT/NUMBER", default = ""),
 
-  optparse::make_option(opt_str = c("-t", "--template"), type = "character",
-    help = paste0("Template for sprintf function to convert ID column when ",
-      "deviating from tip labels [default: %default]"),
-    metavar = "PATTERN", default = "%s"),
+    optparse::make_option(opt_str = c("-s", "--separator"), type = "character",
+      help = paste0("Input column separator for CSV-like files ",
+        "[default: %default]"),
+      metavar = "CHARACTER", default = "\t"),
 
-  optparse::make_option(opt_str = c("-w", "--width"), type = "numeric",
-    help = paste0("Border with used for domains, colour strips etc. ",
-      "[default: %default]"),
-    metavar = "NUMBER", default = 0.5)
+    optparse::make_option(opt_str = c("-t", "--template"), type = "character",
+      help = paste0("Template for sprintf function to convert ID column when ",
+        "deviating from tip labels [default: %default]"),
+      metavar = "PATTERN", default = "%s"),
 
-), add_help_option = FALSE, prog = "table2itol.R",
-usage = "%prog [options] file1 file2 ...", description = "
-%prog: converting spreadsheet files to iTOL input, version 2.1.0",
-epilogue = "
+    optparse::make_option(opt_str = c("-w", "--width"), type = "numeric",
+      help = paste0("Border with used for domains, colour strips etc. ",
+        "[default: %default]"),
+      metavar = "NUMBER", default = 0.5)
+
+  ), add_help_option = FALSE, prog = "table2itol.R",
+  usage = "%prog [options] file1 file2 ...", description = "
+  %prog: converting spreadsheet files to iTOL input, version 2.2.0",
+  epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
 -i\tUnless name of tip identifier column happens to match default.
@@ -154,24 +156,20 @@ EXAMPLES:
 
 For more examples see the test folder and the FAQ.
 "
-)
+  )
 
-invisible(list2env(optparse::parse_args(optionparser,
-  commandArgs(TRUE), TRUE, TRUE), environment()))
+  invisible(list2env(optparse::parse_args(optionparser,
+    commandArgs(TRUE), TRUE, TRUE), environment()))
 
-
-################################################################################
-
-
-if (length(args) && !options$help) {
-  options$infiles <- args
-  options$help <- NULL
-  names(options) <- chartr("-", ".", names(options))
-} else {
-  optparse::print_help(optionparser)
-  if (interactive()) {
-    rm(optionparser, options, args)
-    message("
+  if (length(args) && !options$help) {
+    options$infiles <- args
+    options$help <- NULL
+    names(options) <- chartr("-", ".", names(options))
+  } else {
+    optparse::print_help(optionparser)
+    if (interactive()) {
+      rm(optionparser, options, args)
+      message("
 ********************************************************************************
 
 Apparently this script is running in interactive mode. You could now generate
@@ -181,10 +179,12 @@ calling:
 create_itol_files(infiles)
 
 ********************************************************************************
-    ")
-  } else {
-    quit("no", 1L)
+      ")
+    } else {
+      quit("no", 1L)
+    }
   }
+
 }
 
 

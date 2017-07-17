@@ -99,6 +99,13 @@ ______EOF
 [ $# -gt 0 ] || set -- ../table2itol.R
 
 
+for infile; do
+  helpfile=${infile##*/}
+  helpfile=${helpfile%.*}_help.txt
+  "$infile" -h > "$helpfile" || true
+done
+
+
 static_check R_settings.txt "$@"
 
 
