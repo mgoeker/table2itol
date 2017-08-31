@@ -42,7 +42,8 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
     optparse::make_option(opt_str = c("-c", "--conversion"), type = "character",
       help = paste0("Convert integer columns to factors ('factor') or numbers ",
-        "with decimal points ('double') [default: %default]"),
+        "with decimal points ('double') or just not 0/1 to logical vectors ",
+        "('keep') [default: %default]"),
       metavar = "NAME", default = "none"),
 
     optparse::make_option(opt_str = c("-C", "--colour-file"),
@@ -673,6 +674,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       colorstrip =,
       domains =,
       gradient =,
+      heatmap =,
       simplebar =,
       text = sprintf("DATASET_%s", toupper(title)),
       stop(sprintf("unknown title '%s'", title))
@@ -890,6 +892,32 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
+  emit_itol_matrix <- function(x, ids, name, outdir, endcolor,
+      precision, borwid, ...) {
+    if (is.integer(x))
+      precision <- 0L
+    annotation <- list(
+      BORDER_WIDTH = borwid,
+      COLOR = "#fb9a99",
+      COLOR_MAX = endcolor,
+      COLOR_MIN = LIGHTGREY,
+      COLOR_NAN = WHITE,
+      DATASET_LABEL = name,
+      FIELD_LABELS = colnames(x),
+      LEGEND_COLORS = c(LIGHTGREY, endcolor),
+      LEGEND_LABELS = legend_range(x, precision),
+      LEGEND_SHAPES = c(1L, 1L),
+      LEGEND_TITLE = pretty_str(name),
+      MARGIN = 5,
+      STRIP_WIDTH = 50
+    )
+    storage.mode(x) <- "character"
+    x[is.na(x)] <- "X"
+    x <- apply(X = x, MARGIN = 1L, FUN = paste0, collapse = "\t")
+    print_itol(outdir, "heatmap", annotation, ids, x)
+  }
+
+
   # Not yet implemented.
   #
   emit_branch_annotation_factor <- function(x, ids, name, outdir, ...) {
@@ -952,9 +980,10 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   fix_column_types <- function(x, convint, convdbl) {
 
     # convert binary integer vectors to logical vectors
-    for (i in which(vapply(x, is.integer, NA)))
-      if (all(is.element(x[, i], c(0L, 1L, NA_integer_))))
-        storage.mode(x[, i]) <- "logical"
+    if (!is.element(convint, c("keep", "double")))
+      for (i in which(vapply(x, is.integer, NA)))
+        if (all(is.element(x[, i], c(0L, 1L, NA_integer_))))
+          storage.mode(x[, i]) <- "logical"
 
     # convert factors to logical vectors if values look like boolean values
     for (i in which(vapply(x, is.factor, NA))) {
@@ -976,6 +1005,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     # convert integers and logical vectors to other data types if requested
     switch(
       EXPR = convint,
+      keep = NULL,
       none = for (i in which(vapply(x, is.logical, NA)))
         if (anyNA(x[, i]))
           x[, i] <- factor(x[, i]),
@@ -1082,6 +1112,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     idpos <- get_col(icol, x, strict)
     if (!idpos)
       return(invisible(FALSE))
+    names(idpos) <- names(x)[[idpos]]
 
     if (anyNA(x[, idpos]))
       x <- x[!is.na(x[, idpos]), , drop = FALSE]
@@ -1148,6 +1179,19 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     # normal columns, dispatch done according to data type (class)
     x <- x[, -c(idpos, lpos, cpos), drop = FALSE]
     klass <- vapply(x, class, "")
+
+    if (all(duplicated.default(klass)[-1L]))
+      switch(
+        EXPR = klass[[1L]],
+        integer =,
+        numeric = {
+          klass <- "matrix"
+          x <- list(as.matrix(x))
+          names(x) <- names(idpos)
+        },
+        NULL
+      )
+
     clrs <- assort(klass, SPECIAL_COLORS)
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
       fun = lapply(sprintf("emit_itol_%s", klass), match.fun), endcolor = clrs,

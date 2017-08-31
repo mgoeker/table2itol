@@ -7,3 +7,4 @@ E006 G006 ../table2itol.R -D __OUTDIR__ -i Left -j Right INPUT/branch_annotation
 E007 G007 ../table2itol.R -a -C INPUT/colours_1.yml -c double -D __OUTDIR__ -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
 E002 G008 ../table2itol.R -a -d -c none -D __OUTDIR__ -b continent\ of\ isolation\  -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.xlsx
 E009 G009 ../table2itol.R -a -G INPUT/colours_1.yml -c double -D __OUTDIR__ -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
+E010 G010 ../table2itol.R -c keep -D __OUTDIR__ -i ID -t %s INPUT/example_002.tsv
