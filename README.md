@@ -11,7 +11,7 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
 * Works with [CSV](https://en.wikipedia.org/wiki/Delimiter-separated_values),
   OpenOffice, LibreOffice and Microsoft Excel files.
 * Supports iTOL domains, colour strips, simple bars, gradients, binary data,
-  and texts.
+  heat maps, and texts.
 * Partially supports iTOL branch annotation (currently work in progress).
 * By default selects the appropriate visualisation from the data type of each
   input column but this can be modified by the user.
@@ -215,15 +215,16 @@ without `--abort` the script generates warnings when data sets get skipped.
 #### The script generates too many output files
 
 Solution: Accept as a design decision that the scripts generates one file for 
-each input column (except for the tip identifier column). Since you can still 
-decide to not upload (some of) the generated files to iTOL and also deselect 
-data sets within iTOL, we believe it would not make much sense to also include a
-selection mechanism within the `table2itol.R` script. As last resort you could 
-also reduce the number of input columns. However, if you are mainly concerned 
-about the script cluttering up your working directory with files, simply
-consider using the `--directory` option to place all output files in a dedicated
-directory. An empty argument to this option causes the script to place every
-output file in the directory in which the respective inout file resides.
+each input column (except for the tip identifier column and when a heatmap is
+created). Since you can still decide to not upload (some of) the generated files
+to iTOL and also deselect data sets within iTOL, we believe it would not make
+much sense to also include a selection mechanism within the `table2itol.R`
+script. As last resort you could also reduce the number of input columns.
+However, if you are mainly concerned about the script cluttering up your working
+directory with files, simply consider using the `--directory` option to place
+all output files in a dedicated directory. An empty argument to this option
+causes the script to place every output file in the directory in which the
+respective inout file resides.
 
 #### A column is requested but missing
 
@@ -304,11 +305,21 @@ vectors in turn. To get columns understood as logical vectors their fields must
 pairs: `0`/`1`, `true`/`false`, `t`/`f`, `yes`/`no`, `y`/`n` or `on`/`off`. This
 considerably extends the values recognized by base R as logical vectors on
 input. Moreover, case differences do not matter, but you cannot mix any of these
-variants.
+variants. These conversions get turned off when using `--conversion keep` or
+`--conversion double`.
 
 Colours defined using `--colour-file` only play a role for columns treated as 
 factor, not for those yielding a logical vector. To set the colours used for end
 points as gradients as well as for binary data, use the `--gradient-file`
 argument. In contrast, one cannot modify the symbols used; this would not make
 much sense though, since iTOL understands only certain symbols anyway.
+
+#### How can I generate a heat map?
+
+A heat map is automatically generated from a data frame when all columns (except
+for the special columns addressed using `--identifier`, `--label` and 
+`--background`) are numeric (uniformly of mode double or uniformly of mode 
+integer). These columns get merged into a single file whose name is derived from
+the name of the identifier column. You might need the `--conversion` argument to
+obtain columns that are uniformly numeric.
 
