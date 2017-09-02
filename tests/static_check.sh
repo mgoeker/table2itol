@@ -51,7 +51,7 @@ relevant_package_versions <- function(env = globalenv()) {
       packages_called(body(thing), result)
   result <- sort.int(names(result))
   result <- sapply(X = result, FUN = packageVersion, simplify = FALSE)
-  vapply(result, as.character, "")
+  c(R = as.character(getRversion()), vapply(result, as.character, ""))
 }
 cat(formatDL(relevant_package_versions()), sep = "\n", file = "$outfile")
 

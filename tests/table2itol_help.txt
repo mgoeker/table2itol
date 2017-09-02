@@ -1,6 +1,6 @@
 Usage: table2itol.R [options] file1 file2 ...
 
-  table2itol.R: converting spreadsheet files to iTOL input, version 2.2.0
+  table2itol.R: converting spreadsheet files to iTOL input, version 2.3.0
 
 Options:
 	-a, --abort
@@ -10,7 +10,7 @@ Options:
 		Column to define the background colours of the tip labels; empty means no background colours [default: ]
 
 	-c NAME, --conversion=NAME
-		Convert integer columns to factors ('factor') or numbers with decimal points ('double') [default: none]
+		Convert integer columns to factors ('factor') or numbers with decimal points ('double') or just not 0/1 to logical vectors ('keep') [default: none]
 
 	-C FILE, --colour-file=FILE
 		File in YAML format defining alternative colour vectors for domain output [default: ]
