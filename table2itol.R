@@ -134,7 +134,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.3.0",
+  %prog: converting spreadsheet files to iTOL input, version 2.3.1",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -244,6 +244,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
 
   WHITE <- "#FFFFFF"
+
+
+  OUTPUT_SEPARATOR <- "\t"
 
 
   # Used as end points of colour gradients, with white as other end point,
@@ -651,10 +654,10 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       x <- x[sort.list(names(x))]
       sizes <- lengths(x, FALSE)
       for (i in which(sizes > 1L))
-        x[[i]] <- paste0(x[[i]], collapse = "\t")
+        x[[i]] <- paste0(x[[i]], collapse = OUTPUT_SEPARATOR)
       for (i in which(!sizes))
         x[[i]] <- ""
-      paste(names(x), unlist(x, FALSE, FALSE), sep = "\t")
+      paste(names(x), unlist(x, FALSE, FALSE), sep = OUTPUT_SEPARATOR)
     }
 
     if (is.character(annotation)) {
@@ -680,10 +683,17 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       stop(sprintf("unknown title '%s'", title))
     )
 
+    separator <- sprintf("SEPARATOR %s", switch(
+      EXPR = OUTPUT_SEPARATOR,
+      `\t` = "TAB",
+      stop("output separator '", OUTPUT_SEPARATOR, "' not yet supported")
+    ))
+
     file <- itol_filename(colname, title, outdir)
-    cat(kind, "SEPARATOR TAB", join(annotation), "DATA", file = file,
+
+    cat(kind, separator, join(annotation), "DATA", file = file,
       labels = NULL, sep = "\n", fill = FALSE, append = FALSE)
-    cat(paste(..., sep = "\t", collapse = NULL), file = file,
+    cat(paste(..., sep = OUTPUT_SEPARATOR, collapse = NULL), file = file,
       labels = NULL, sep = "\n", fill = FALSE, append = TRUE)
 
   }
@@ -913,7 +923,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     )
     storage.mode(x) <- "character"
     x[is.na(x)] <- "X"
-    x <- apply(X = x, MARGIN = 1L, FUN = paste0, collapse = "\t")
+    x <- apply(X = x, MARGIN = 1L, FUN = paste0, collapse = OUTPUT_SEPARATOR)
     print_itol(outdir, "heatmap", annotation, ids, x)
   }
 
@@ -986,17 +996,18 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
           storage.mode(x[, i]) <- "logical"
 
     # convert factors to logical vectors if values look like boolean values
-    for (i in which(vapply(x, is.factor, NA))) {
-      values <- tolower(levels.default(x[, i]))
-      truevalue <- NA_character_
-      for (spelling in BINARY_VALUE_SPELLINGS)
-        if (all(is.element(values, spelling))) {
-          truevalue <- spelling[[1L]]
-          break
-        }
-      if (!is.na(truevalue))
-        x[, i] <- tolower(x[, i]) == truevalue
-    }
+    if (convint != "keep")
+      for (i in which(vapply(x, is.factor, NA))) {
+        values <- tolower(levels.default(x[, i]))
+        truevalue <- NA_character_
+        for (spelling in BINARY_VALUE_SPELLINGS)
+          if (all(is.element(values, spelling))) {
+            truevalue <- spelling[[1L]]
+            break
+          }
+        if (!is.na(truevalue))
+          x[, i] <- tolower(x[, i]) == truevalue
+      }
 
     if (convdbl)
       for (i in which(vapply(x, is.double, NA)))
@@ -1180,11 +1191,12 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     x <- x[, -c(idpos, lpos, cpos), drop = FALSE]
     klass <- vapply(x, class, "")
 
+    # join all remaining columns in a matrix when applicable
     if (all(duplicated.default(klass)[-1L]))
       switch(
         EXPR = klass[[1L]],
         integer =,
-        numeric = {
+        numeric = { # 'pseudointeger' should not be accepted here
           klass <- "matrix"
           x <- list(as.matrix(x))
           names(x) <- names(idpos)
