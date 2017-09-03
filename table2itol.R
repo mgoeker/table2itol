@@ -134,7 +134,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.3.1",
+  %prog: converting spreadsheet files to iTOL input, version 2.3.2",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -627,6 +627,15 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
+  # Helper function to convert output vectors or matrices.
+  #
+  convert_to <- function(x, unavailable)  {
+    storage.mode(x) <- typeof(unavailable)
+    x[is.na(x)] <- unavailable
+    x
+  }
+
+
   # Used for generating the output filename.
   #
   itol_filename <- function(colname, kind, directory) {
@@ -686,7 +695,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     separator <- sprintf("SEPARATOR %s", switch(
       EXPR = OUTPUT_SEPARATOR,
       `\t` = "TAB",
-      stop("output separator '", OUTPUT_SEPARATOR, "' not yet supported")
+      stop(sprintf("output separator '%s' not yet supported", OUTPUT_SEPARATOR))
     ))
 
     file <- itol_filename(colname, title, outdir)
@@ -875,8 +884,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       MARGIN = 5,
       WIDTH = 20
     )
-    x <- ifelse(is.na(x), -1L, as.integer(x))
-    print_itol(outdir, "binary", annotation, ids, x)
+    print_itol(outdir, "binary", annotation, ids, convert_to(x, -1L))
   }
 
 
@@ -921,9 +929,8 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       MARGIN = 5,
       STRIP_WIDTH = 50
     )
-    storage.mode(x) <- "character"
-    x[is.na(x)] <- "X"
-    x <- apply(X = x, MARGIN = 1L, FUN = paste0, collapse = OUTPUT_SEPARATOR)
+    x <- apply(X = convert_to(x, "X"), MARGIN = 1L,
+      FUN = paste0, collapse = OUTPUT_SEPARATOR)
     print_itol(outdir, "heatmap", annotation, ids, x)
   }
 
