@@ -259,28 +259,41 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # Colour vectors collected by Jan P. Meier-Kolthoff.
   #
   COLOURS <- list(
+    #	Dark2; colorblind-safe
     JMK01 = "#1b9e77",
+    #	Dark2; colorblind-safe
     JMK02 = c("#1b9e77", "#d95f02"),
+    #	Dark2; colorblind-safe
     JMK03 = c("#1b9e77", "#d95f02", "#7570b3"),
+    #	4-class Paired; colorblind-safe
     JMK04 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"),
+    #	5-class Accent; print-friendly
     JMK05 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99"),
+    #	6-class Paired; print-friendly
     JMK06 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c"),
+    #	7-class Paired; print-friendly
     JMK07 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c", "#fdbf6f"),
+    #	Dark2; print-friendly
     JMK08 = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a",
       "#66a61e", "#e6ab02", "#a6761d", "#666666"),
+    # 9-class Set1; print-friendly
     JMK09 = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
       "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"),
+    # 10-class Paired
     JMK10 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a"),
+    # 11-class Paired
     JMK11 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
       "#ffff99"),
+    # 12-class Paired
     JMK12 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
       "#ffff99", "#b15928"),
+    ## from here on: iwanthue (all colors, hard)
     JMK13 = c("#8393c7", "#8ad256", "#6a49c5", "#d2b351",
       "#cb55c3", "#4d4040", "#c4527c", "#57743d", "#d85439", "#7accb1",
       "#925136", "#ceb2ab", "#512f67"),
@@ -432,16 +445,15 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
 
   # Note that type.convert() does not recognize some spellings of false/true.
-  # The value for TRUE must be the first one of each two-element vector.
+  # The value for TRUE must be the first one of each row.
   #
-  BINARY_VALUE_SPELLINGS <- list(
-    c("y", "n"),
-    c("t", "f"),
-    c("true", "false"),
-    c("yes", "no"),
-    c("on", "off")
-  )
-
+  BINARY_VALUE_SPELLINGS <- matrix(c(
+     "y", "n",
+     "t", "f",
+     "true", "false",
+     "yes", "no",
+     "on", "off"
+  ), 5L, 2L, TRUE)
 
   ## Helper functions
 
@@ -1007,9 +1019,10 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       for (i in which(vapply(x, is.factor, NA))) {
         values <- tolower(levels.default(x[, i]))
         truevalue <- NA_character_
-        for (spelling in BINARY_VALUE_SPELLINGS)
-          if (all(is.element(values, spelling))) {
-            truevalue <- spelling[[1L]]
+        for (j in seq_len(nrow(BINARY_VALUE_SPELLINGS)))
+          if (all(is.element(values, BINARY_VALUE_SPELLINGS[j, ]))) {
+            print(BINARY_VALUE_SPELLINGS[j, ])
+            truevalue <- BINARY_VALUE_SPELLINGS[j, 1L]
             break
           }
         if (!is.na(truevalue))
