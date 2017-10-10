@@ -134,7 +134,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.3.2",
+  %prog: converting spreadsheet files to iTOL input, version 2.3.3",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -1021,7 +1021,6 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
         truevalue <- NA_character_
         for (j in seq_len(nrow(BINARY_VALUE_SPELLINGS)))
           if (all(is.element(values, BINARY_VALUE_SPELLINGS[j, ]))) {
-            print(BINARY_VALUE_SPELLINGS[j, ])
             truevalue <- BINARY_VALUE_SPELLINGS[j, 1L]
             break
           }
