@@ -107,6 +107,11 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
         "provided, separated by the value of --separator [default: %default]"),
       metavar = "TEXT", default = "\t(null)\tNA"),
 
+    optparse::make_option(opt_str = c("-o", "--opacity"), type = "numeric",
+      help = paste0("Numeric factor for the transparency of the colours ",
+        "(0 => transparent, 1 => fully opaque) [default: %default]"),
+      metavar = "NUMBER", default = 1),
+
     optparse::make_option(opt_str = c("-p", "--precision"), type = "integer",
       help = paste0("Number of decimal points used in the gradient legends ",
         "[default: %default]"),
@@ -134,7 +139,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.3.3",
+  %prog: converting spreadsheet files to iTOL input, version 2.3.4",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -200,7 +205,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     gradient.file = "", separator = "\t", na.strings = "\t(null)\tNA",
     abort = FALSE, conversion = "none", double.to.bars = FALSE, emblems = "",
     template = "%s", max.size = 20L, favour = 1, width = 0.5, precision = 1L,
-    restrict = "") {
+    restrict = "", opacity = 1) {
 
 
   OLDOPT <- options(warn = 1L)
@@ -484,20 +489,24 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
+  standardize_colour <- function(x, opacity) {
+    x <- grDevices::col2rgb(x, TRUE)
+    x["alpha", ] <- as.integer(x["alpha", ] * opacity)
+    tolower(grDevices::rgb(x["red", ], x["green", ],
+      x["blue", ], x["alpha", ], NULL, 255L))
+  }
+
+
   # For input of user-defined colour vectors.
   #
   read_colour_vectors <- function(file, upto) {
-    standard_colour <- function(x) {
-      x <- grDevices::col2rgb(x, TRUE)
-      tolower(grDevices::rgb(x[1L, ], x[2L, ], x[3L, ], x[4L, ], NULL, 255L))
-    }
     if (!nzchar(file))
       return(NULL)
     x <- yaml::yaml.load_file(file)
     if (!is.list(x))
       x <- list(x)
     n <- lengths(x)
-    lapply(x[n > 0L & n <= upto], standard_colour)
+    x[n > 0L & n <= upto]
   }
 
 
@@ -1240,12 +1249,16 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # assignment of input colour vectors is solely by vector length
   for (clrs in read_colour_vectors(colour.file, length(COLOURS)))
     COLOURS[[length(clrs)]] <- clrs
+  COLOURS[] <- lapply(COLOURS, standardize_colour, opacity)
   check_colour_vectors(COLOURS, TRUE)
 
   # any length allowed, last one wins
   for (clrs in read_colour_vectors(gradient.file, Inf))
     SPECIAL_COLORS <- clrs
+  SPECIAL_COLORS <- standardize_colour(SPECIAL_COLORS, opacity)
   check_colour_vectors(SPECIAL_COLORS, FALSE)
+
+  LIGHTGREY <- standardize_colour(LIGHTGREY, opacity)
 
   na.strings <- unlist(strsplit(na.strings, separator, TRUE), FALSE, FALSE)
   if (!length(na.strings))

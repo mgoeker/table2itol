@@ -3,7 +3,7 @@
 # colour vectors need to be defined, only those that should replace default
 # colour vectors. An attempt is made to standardize the input colours, yielding
 # hexadecimal codes (such as the ones listed below). You could use readable
-# names such as 'blue', 'green' etc. instead; they just need to tbe understood
+# names such as 'blue', 'green' etc. instead; they just need to be understood
 # by R.
 #
 COLOURS05:

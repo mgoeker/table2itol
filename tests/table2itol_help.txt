@@ -1,6 +1,6 @@
 Usage: table2itol.R [options] file1 file2 ...
 
-  table2itol.R: converting spreadsheet files to iTOL input, version 2.3.3
+  table2itol.R: converting spreadsheet files to iTOL input, version 2.3.4
 
 Options:
 	-a, --abort
@@ -47,6 +47,9 @@ Options:
 
 	-n TEXT, --na-strings=TEXT
 		Sentinels for missing input values; several can be provided, separated by the value of --separator [default: 	(null)	NA]
+
+	-o NUMBER, --opacity=NUMBER
+		Numeric factor for the transparency of the colours (0 => transparent, 1 => fully opaque) [default: 1]
 
 	-p INTEGER, --precision=INTEGER
 		Number of decimal points used in the gradient legends [default: 1]

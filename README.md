@@ -323,3 +323,9 @@ integer). These columns get merged into a single file whose name is derived from
 the name of the identifier column. You might need the `--conversion` argument to
 obtain columns that are uniformly numeric.
 
+#### The colours appear too strong. What can I do?
+
+The argument `--opacity` can be used to defined the so-called alpha channel of
+each colour. Set the opacity to a value lower than 1 to obtain more transparent
+colours.
+
