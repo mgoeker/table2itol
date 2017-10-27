@@ -264,24 +264,24 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # Colour vectors collected by Jan P. Meier-Kolthoff.
   #
   COLOURS <- list(
-    #	Dark2; colorblind-safe
+    # Dark2; colorblind-safe
     JMK01 = "#1b9e77",
-    #	Dark2; colorblind-safe
+    # Dark2; colorblind-safe
     JMK02 = c("#1b9e77", "#d95f02"),
-    #	Dark2; colorblind-safe
+    # Dark2; colorblind-safe
     JMK03 = c("#1b9e77", "#d95f02", "#7570b3"),
-    #	4-class Paired; colorblind-safe
+    # 4-class Paired; colorblind-safe
     JMK04 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"),
-    #	5-class Accent; print-friendly
+    # 5-class Accent; print-friendly
     JMK05 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99"),
-    #	6-class Paired; print-friendly
+    # 6-class Paired; print-friendly
     JMK06 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c"),
-    #	7-class Paired; print-friendly
+    # 7-class Paired; print-friendly
     JMK07 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c", "#fdbf6f"),
-    #	Dark2; print-friendly
+    # Dark2; print-friendly
     JMK08 = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a",
       "#66a61e", "#e6ab02", "#a6761d", "#666666"),
     # 9-class Set1; print-friendly
