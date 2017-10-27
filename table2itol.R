@@ -14,9 +14,10 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-# You must install R and optparse (https://cran.r-project.org/package=optparse)
-# to run this script. Several other R packages are needed for special purposes.
-# See the README for details.
+# You must install R (https://cran.r-project.org/) and for non-interactive use
+# also optparse (https://cran.r-project.org/package=optparse) to run this
+# script. Several other R packages are needed for special purposes. See the
+# README for details.
 #
 # This script was written for the command line but can also be used in
 # interactive mode. See the README for details.
@@ -139,7 +140,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.3.4",
+  %prog: converting spreadsheet files to iTOL input, version 2.3.5",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -202,10 +203,10 @@ create_itol_files(infiles)
 #
 create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     background = "", identifier2 = "", directory = ".", colour.file = "",
-    gradient.file = "", separator = "\t", na.strings = "\t(null)\tNA",
-    abort = FALSE, conversion = "none", double.to.bars = FALSE, emblems = "",
-    template = "%s", max.size = 20L, favour = 1, width = 0.5, precision = 1L,
-    restrict = "", opacity = 1) {
+    gradient.file = "", separator = "\t", na.strings = paste0(c("", "(null)",
+      "NA"), collapse = separator), abort = FALSE, conversion = "none",
+    double.to.bars = FALSE, emblems = "", template = "%s", max.size = 20L,
+    favour = 1, width = 0.5, precision = 1L, restrict = "", opacity = 1) {
 
 
   OLDOPT <- options(warn = 1L)
