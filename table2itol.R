@@ -140,7 +140,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.4.1",
+  %prog: converting spreadsheet files to iTOL input, version 2.4.2",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -1257,7 +1257,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   for (clrs in read_colour_vectors(gradient.file, Inf))
     SPECIAL_COLORS <- clrs
   SPECIAL_COLORS <- standardize_colour(SPECIAL_COLORS, opacity)
-  check_colour_vectors(SPECIAL_COLORS, FALSE)
+  check_colour_vectors(list(SPECIAL_COLORS), FALSE)
 
   LIGHTGREY <- standardize_colour(LIGHTGREY, opacity)
 
