@@ -140,7 +140,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.3.5",
+  %prog: converting spreadsheet files to iTOL input, version 2.4.1",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
