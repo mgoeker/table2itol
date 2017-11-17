@@ -140,7 +140,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.4.2",
+  %prog: converting spreadsheet files to iTOL input, version 2.5.0",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -492,9 +492,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
   standardize_colour <- function(x, opacity) {
     x <- grDevices::col2rgb(x, TRUE)
-    x["alpha", ] <- as.integer(x["alpha", ] * opacity)
+    alpha <- if (opacity < 1) as.integer(x["alpha", ] * opacity) else NULL
     tolower(grDevices::rgb(x["red", ], x["green", ],
-      x["blue", ], x["alpha", ], NULL, 255L))
+      x["blue", ], alpha, NULL, 255L))
   }
 
 
