@@ -37,9 +37,10 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
 * The [yaml](https://CRAN.R-project.org/package=yaml) package for R if
   you want to define colour vectors yourself.
 
-*Please note that explaining how to correctly install R or R packages is beyond
-the scope of this manual, and please do not contact the `table2itol.R` authors
-about this issue. There is plenty of online material available elsewhere.*
+*Please note that explaining how to correctly install R is beyond the scope of
+this manual, and please do not contact the `table2itol.R` authors about this
+issue. There is plenty of online material available elsewhere. As for the
+installation of or R packages see the FAQ below.*
 
 ## Installation
 
@@ -189,9 +190,10 @@ Solution: Install the [yaml](https://CRAN.R-project.org/package=yaml)
 package for R. (It is only needed if you want to use the script in conjunction
 with your own colour vectors.)
 
-*Please note that explaining how to correctly install R packages is beyond the
-scope of this manual, and please do not contact the `table2itol.R` authors about
-this issue. There is plenty of online material available elsewhere.*
+*Please note that explaining how to correctly install R is beyond the scope of
+this manual, and please do not contact the `table2itol.R` authors about this
+issue. There is plenty of online material available elsewhere. As for the
+installation of or R packages see the FAQ  below.*
 
 #### Outdated R version
 
@@ -252,6 +254,24 @@ would yield only a single output file. Instead of silently overwriting the
 earlier ones, the script stops with an informative error message.
 
 ## Frequently asked questions
+
+#### How can I install the required R packages?
+
+There are several ways to obtain, install and update R packages. From within R,
+we found the following approach to be convenient:
+
+```R
+source("https://bioconductor.org/biocLite.R")
+biocLite(c("optparse", "plotrix",
+  "readODS", "readxl", "yaml"))
+```
+
+This should install or update all R packages recommended for `table2itol.R`.
+
+*Please note that explaining in greater detail how to correctly install R
+packages is beyond the scope of this manual, and please do not contact the
+`table2itol.R` authors about this issue. There is plenty of online material
+available elsewhere.*
 
 #### How can I generate other kinds of visualisation from integer columns?
 
