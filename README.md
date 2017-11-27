@@ -40,7 +40,7 @@ script makes it easy to generate iTOL annotations from spreadsheet files.
 *Please note that explaining how to correctly install R is beyond the scope of
 this manual, and please do not contact the `table2itol.R` authors about this
 issue. There is plenty of online material available elsewhere. As for the
-installation of or R packages see the FAQ below.*
+installation of R packages see the FAQ below.*
 
 ## Installation
 
@@ -262,16 +262,17 @@ we found the following approach to be convenient:
 
 ```R
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("optparse", "plotrix",
-  "readODS", "readxl", "yaml"))
+biocLite(c("optparse", "plotrix", "readODS", "readxl", "yaml"))
 ```
 
-This should install or update all R packages recommended for `table2itol.R`.
+This should under normal circumstances install or update all R packages
+recommended for `table2itol.R`.
 
 *Please note that explaining in greater detail how to correctly install R
 packages is beyond the scope of this manual, and please do not contact the
 `table2itol.R` authors about this issue. There is plenty of online material
-available elsewhere.*
+available elsewhere. The `table2itol.R` authors cannot guarantee that the script
+provided by [BioConductor](https://bioconductor.org/) works as expected.*
 
 #### How can I generate other kinds of visualisation from integer columns?
 
