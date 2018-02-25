@@ -3,7 +3,7 @@
 
 ################################################################################
 #
-# run_tests.sh -- Bash script for checking the table2itol.R script.
+# run_tests.sh -- Bash script for testing another script in a simple manner.
 #
 # (C) since 2017 by Markus Goeker (markus [DOT] goeker [AT] dsmz [DOT] de)
 #
@@ -19,10 +19,11 @@ set -eu
 ################################################################################
 
 
-# Expects textual input files with name of directory of expected output files
-# in 1st field, name of directory of resulting output files in 2nd fields, and
-# program call to be tested in the rest of the fields. First argument must be
-# example output file that will list the successful calls to table2itol.R.
+# Expects textual input files with name of directory of expected output files in
+# the 1st field, name of directory of resulting output files in the 2nd field,
+# and program call to be tested in the rest of the fields. First argument must
+# be example output file that will list the successful calls to the script to
+# test.
 #
 function check_outdir
 {
