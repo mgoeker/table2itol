@@ -117,6 +117,9 @@ function check_outdir
 [ $# -gt 0 ] || exit 0
 
 
+export _R_CHECK_LENGTH_1_CONDITION_=true
+
+
 if check_outdir examples.txt "$@"; then
   echo "*** TESTS SUCCESSFUL ***"
   echo
