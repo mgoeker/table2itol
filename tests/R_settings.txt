@@ -1,7 +1,7 @@
-R                       3.4.3
-grDevices               3.4.3
-plotrix                 3.6.6
+R                       3.5.1
+grDevices               3.5.1
+plotrix                 3.7.3
 readODS                 1.6.4
-readxl                  1.0.0
-tools                   3.4.3
-yaml                    2.1.15
+readxl                  1.1.0
+tools                   3.5.1
+yaml                    2.2.0
