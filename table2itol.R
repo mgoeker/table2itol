@@ -461,6 +461,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
      "on", "off"
   ), 5L, 2L, TRUE)
 
+
   ## Helper functions
 
 
@@ -490,6 +491,8 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
+  # This also converts trivial names for colours into RGB codes.
+  #
   standardize_colour <- function(x, opacity) {
     x <- grDevices::col2rgb(x, TRUE)
     x["alpha", ] <- as.integer(x["alpha", ] * opacity)
@@ -964,10 +967,20 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
-  # Not yet implemented.
+  # Input is supposed to represent support values to be shown as text.
   #
-  emit_branch_annotation_integer <- function(x, ids, name, outdir, ...) {
-    message(sprintf("Skipping column '%s' of mode 'integer' ...", name))
+  emit_branch_annotation_integer <- function(x, ids, name, outdir, branchpos,
+      cutoff, restriction, ...) {
+    coordinated_na_removal(x, ids)
+    annotation <- list(DATASET_LABEL = name, MARGIN = 5, COLOR = "#bebada")
+    mask <- mask_if_requested(x, cutoff, restriction)
+    if (any(mask)) {
+      x[mask] <- NA_real_
+      coordinated_na_removal(x, ids)
+    }
+    # additional columns: position, color, style, size_factor, rotation
+    print_itol(outdir, "text", annotation, ids, x,
+      branchpos, BLACK, "normal", 0.75, 0)
   }
 
 
@@ -989,8 +1002,8 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # Vectors of mode 'double' (of class 'numeric' in R) yield a colour gradient
   # within the branch symbols.
   #
-  emit_branch_annotation_numeric <- function(x, ids, name, outdir, symbol,
-      endcolor, branchpos, maxsize, precision, cutoff, restriction, ...) {
+  emit_branch_annotation_numeric <- function(x, ids, name, outdir, branchpos,
+      cutoff, restriction, symbol, endcolor, maxsize, precision, ...) {
     coordinated_na_removal(x, ids)
     annotation <- list(
       COLOR = endcolor,
@@ -1130,9 +1143,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     # normal columns, dispatch done according to data type (class)
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
       fun = lapply(sprintf("emit_branch_annotation_%s", klass), match.fun),
-      endcolor = assort(klass, SPECIAL_COLORS),
       branchpos = assort(klass, NULL), SIMPLIFY = FALSE,
       symbol = assort(klass, BRANCH_SYMBOLS), USE.NAMES = FALSE,
+      endcolor = assort(klass, SPECIAL_COLORS),
       MoreArgs = list(ids = icol, precision = precision, outdir = outdir,
         maxsize = maxsize, cutoff = cutoff, restriction = restriction))
 
