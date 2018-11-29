@@ -23,19 +23,21 @@ function static_check
 {
   local infile outfile tmpfile
   declare -i errs=0
-  tmpfile=$(mktemp --suffix ."$FUNCNAME")
+
   outfile=$1
   shift
+
+  tmpfile=$(mktemp --suffix ."${FUNCNAME[0]}")
+
+  rm -f "$outfile"
+
   for infile; do
     if R --interactive --slave > /dev/null <<-______EOF
 
 options(warn = 1L)
 
-# the file to inspect
-source("$infile")
-
 # collect all "::" calls and output their package versions
-relevant_package_versions <- function(env = globalenv()) {
+relevant_package_versions <- function(expr) {
   packages_called <- function(expr, result) {
     rec_collect <- function(x, result, wanted) {
       if (!is.recursive(x))
@@ -48,14 +50,11 @@ relevant_package_versions <- function(env = globalenv()) {
     rec_collect(expr, result, as.symbol("::"))
   }
   result <- new.env(TRUE, emptyenv())
-  for (thing in lapply(ls(env), get))
-    if (is.function(thing))
-      packages_called(body(thing), result)
+  packages_called(expr, result)
   result <- sort.int(names(result))
   result <- sapply(X = result, FUN = packageVersion, simplify = FALSE)
   c(R = as.character(getRversion()), vapply(result, as.character, ""))
 }
-cat(formatDL(relevant_package_versions()), sep = "\n", file = "$outfile")
 
 # use codetools for a static check but remove irrelevant issues
 customised_check <- function(env = globalenv()) {
@@ -67,7 +66,14 @@ customised_check <- function(env = globalenv()) {
     "parameter\\\\W+(ids|outdir|x))\\\\W+may not be used\\\\b")
   problems[!grepl(ok, problems, FALSE, TRUE)]
 }
-cat(paste0(customised_check(), collapse = "\n"), file = "$tmpfile")
+
+expr <- parse("$infile")
+cat(formatDL(relevant_package_versions(expr)), sep = "\\n",
+  file = "$outfile", append = TRUE)
+rm(expr)
+
+source("$infile")
+cat(paste0(customised_check(), collapse = "\\n"), file = "$tmpfile")
 
 quit("no", 0L)
 
@@ -75,11 +81,11 @@ ______EOF
     then
       true
     else
-      let errs+=1
+      (( errs += 1 ))
       echo 'ERROR: call of R did not result' >&2
     fi
     if [ -s "$tmpfile" ]; then
-      let errs+=1
+      (( errs += 1 ))
       echo "PROBLEMS in file $infile detected by static check:"
       cat "$tmpfile"
     else
@@ -87,7 +93,13 @@ ______EOF
     fi
     echo
   done
+
+  if sort -u "$outfile" > "$tmpfile" && [ -s "$tmpfile" ]; then
+    mv "$tmpfile" "$outfile"
+  fi
+
   rm -f "$tmpfile"
+
   [ $errs -gt 0 ] && return 1 || return 0
 }
 
