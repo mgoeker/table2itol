@@ -29,6 +29,8 @@ function static_check
   for infile; do
     if R --interactive --slave > /dev/null <<-______EOF
 
+options(warn = 1L)
+
 # the file to inspect
 source("$infile")
 
