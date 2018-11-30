@@ -49,6 +49,7 @@ function check_outdir
 
   rm -f "$examples"
 
+  # shellcheck disable=SC2162
   while read -a words; do
 
     [ "${#words[@]}" -gt 2 ] || continue
@@ -61,7 +62,8 @@ function check_outdir
       return 1
     fi
 
-    unset words[0] words[1]
+    # shellcheck disable=SC2184
+    unset -v words[0] words[1]
     for ((i = 2; i <= ${#words[@]} + 1; i++)); do
       [ "${words[$i]}" = __OUTDIR__ ] && words[$i]=$outdir
     done
@@ -85,7 +87,7 @@ function check_outdir
       result=ERROR
     fi
 
-    echo -e "TEST $expdir <=> $outdir\t$result"
+    echo -e "TEST $expdir <=> $outdir\\t$result"
 
     if [ "$result" = SUCCESS ]; then
       if [ -z "$empty" ]; then
@@ -93,7 +95,7 @@ function check_outdir
       fi
       echo "${words[@]// /\\ }" >> "$examples"
     else
-      let errors+=1
+      (( errors += 1 ))
     fi
 
     echo >&2

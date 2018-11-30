@@ -34,7 +34,7 @@ function static_check
   for infile; do
     if R --interactive --slave > /dev/null <<-______EOF
 
-options(warn = 1L)
+options(warn = 1L, error = function(...) quit("no", 1L))
 
 # collect all "::" calls and output their package versions
 relevant_package_versions <- function(expr) {
@@ -79,17 +79,16 @@ quit("no", 0L)
 
 ______EOF
     then
-      true
+      if [ -s "$tmpfile" ]; then
+        (( errs += 1 ))
+        echo "PROBLEMS in file $infile detected by static check:"
+        cat "$tmpfile"
+      else
+        echo "File $infile seems alright."
+      fi
     else
       (( errs += 1 ))
       echo 'ERROR: call of R did not result' >&2
-    fi
-    if [ -s "$tmpfile" ]; then
-      (( errs += 1 ))
-      echo "PROBLEMS in file $infile detected by static check:"
-      cat "$tmpfile"
-    else
-      echo "File $infile seems alright."
     fi
     echo
   done
