@@ -38,7 +38,7 @@ options(warn = 1L, error = function(...) quit("no", 1L))
 
 # collect all "::" calls and output their package versions
 relevant_package_versions <- function(expr) {
-  packages_called <- function(expr, result) {
+  packages_called <- function(expr, result = new.env(TRUE, emptyenv())) {
     rec_collect <- function(x, result, wanted) {
       if (!is.recursive(x))
         return(result)
@@ -49,9 +49,7 @@ relevant_package_versions <- function(expr) {
     }
     rec_collect(expr, result, as.symbol("::"))
   }
-  result <- new.env(TRUE, emptyenv())
-  packages_called(expr, result)
-  result <- sort.int(names(result))
+  result <- sort.int(names(packages_called(expr)))
   result <- sapply(X = result, FUN = packageVersion, simplify = FALSE)
   c(R = as.character(getRversion()), vapply(result, as.character, ""))
 }
@@ -67,10 +65,8 @@ customised_check <- function(env = globalenv()) {
   problems[!grepl(ok, problems, FALSE, TRUE)]
 }
 
-expr <- parse("$infile")
-cat(formatDL(relevant_package_versions(expr)), sep = "\\n",
-  file = "$outfile", append = TRUE)
-rm(expr)
+cat(formatDL(relevant_package_versions(parse("$infile"))),
+  sep = "\\n", file = "$outfile", append = TRUE)
 
 source("$infile")
 cat(paste0(customised_check(), collapse = "\\n"), file = "$tmpfile")

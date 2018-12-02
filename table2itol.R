@@ -494,9 +494,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # This also converts trivial names for colours into RGB codes.
   #
   standardize_colour <- function(x, opacity) {
-    x <- grDevices::col2rgb(x, TRUE)
+    x <- col2rgb(x, TRUE)
     x["alpha", ] <- as.integer(x["alpha", ] * opacity)
-    tolower(grDevices::rgb(x["red", ], x["green", ], x["blue", ],
+    tolower(rgb(x["red", ], x["green", ], x["blue", ],
       if (all(x["alpha", ] == 255L)) NULL else x["alpha", ], NULL, 255L))
   }
 

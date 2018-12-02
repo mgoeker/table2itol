@@ -1,6 +1,5 @@
 R                       3.5.1
-grDevices               3.5.1
-optparse                1.4.4
+optparse                1.6.0
 plotrix                 3.7.3
 readODS                 1.6.4
 readxl                  1.1.0
