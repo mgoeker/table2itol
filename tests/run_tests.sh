@@ -28,12 +28,10 @@ set -eu
 function check_outdir
 {
 
-  [ $# -gt 0 ] || return
+  [ $# -gt 1 ] || return
 
   local examples=$1
   shift
-
-  [ $# -gt 0 ] || return
 
   local expdir outdir result empty infile
   declare -a words
@@ -102,7 +100,7 @@ function check_outdir
 
   done < "$@"
 
-  return $errors
+  [ $errors -gt 0 ] && return 1 || return 0
 
 }
 

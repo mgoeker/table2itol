@@ -1,7 +1,7 @@
 R                       3.5.1
 optparse                1.6.0
 plotrix                 3.7.3
-readODS                 1.6.4
+readODS                 1.6.7
 readxl                  1.1.0
 tools                   3.5.1
 yaml                    2.2.0
