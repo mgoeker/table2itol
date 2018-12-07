@@ -21,6 +21,8 @@ set -eu
 
 function static_check
 {
+  [ $# -gt 1 ] || return 1
+
   local infile outfile tmpfile
   declare -i errs=0
 

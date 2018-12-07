@@ -28,7 +28,7 @@ set -eu
 function check_outdir
 {
 
-  [ $# -gt 1 ] || return
+  [ $# -gt 1 ] || return 1
 
   local examples=$1
   shift
