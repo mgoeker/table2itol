@@ -140,7 +140,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.5.1",
+  %prog: converting spreadsheet files to iTOL input, version 2.6.0",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -268,7 +268,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     # Dark2; colorblind-safe
     JMK01 = "#1b9e77",
     # Dark2; colorblind-safe
-    JMK02 = c("#1b9e77", "#d95f02"),
+    JMK02 = c("#d95f02", "#1b9e77"),
     # Dark2; colorblind-safe
     JMK03 = c("#1b9e77", "#d95f02", "#7570b3"),
     # 4-class Paired; colorblind-safe
