@@ -140,7 +140,7 @@ if (length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.7.0",
+  %prog: converting spreadsheet files to iTOL input, version 2.7.1",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -173,10 +173,12 @@ For more examples see the test folder and the FAQ.
 
 if (interactive()) {
 
-  if (!is.null(optionparser))
+  if (is.null(optionparser))
+    warning("optparse package missing: cannot show help message")
+  else
     optparse::print_help(optionparser)
   rm(optionparser)
-      message("
+  message("
 ********************************************************************************
 
 Apparently this script is running in interactive mode. You could now generate
@@ -186,7 +188,7 @@ calling:
 create_itol_files(infiles)
 
 ********************************************************************************
-      ")
+  ")
 
 } else if (is.null(optionparser)) {
 
