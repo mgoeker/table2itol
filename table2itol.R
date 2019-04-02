@@ -27,7 +27,7 @@
 
 # Option processing
 #
-if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
+if (length(find.package("optparse", NULL, TRUE))) {
 
   optionparser <- optparse::OptionParser(option_list = list(
 
@@ -140,7 +140,7 @@ if (!interactive() || length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.6.0",
+  %prog: converting spreadsheet files to iTOL input, version 2.7.0",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -164,18 +164,18 @@ EXAMPLES:
 For more examples see the test folder and the FAQ.
 "
   )
+} else {
 
-  invisible(list2env(optparse::parse_args(optionparser,
-    commandArgs(TRUE), TRUE, TRUE), environment()))
+  optionparser <- NULL
 
-  if (length(args) && !options$help) {
-    options$infiles <- args
-    options$help <- NULL
-    names(options) <- chartr("-", ".", names(options))
-  } else {
+}
+
+
+if (interactive()) {
+
+  if (!is.null(optionparser))
     optparse::print_help(optionparser)
-    if (interactive()) {
-      rm(optionparser, options, args)
+  rm(optionparser)
       message("
 ********************************************************************************
 
@@ -187,9 +187,23 @@ create_itol_files(infiles)
 
 ********************************************************************************
       ")
-    } else {
-      quit("no", 1L)
-    }
+
+} else if (is.null(optionparser)) {
+
+  message("ERROR: need optparse package in interactive mode")
+  quit("no", 1L)
+
+} else {
+
+  invisible(list2env(optparse::parse_args(optionparser,
+    commandArgs(TRUE), TRUE, TRUE), environment()))
+  if (length(args) && !options$help) {
+    options$infiles <- args
+    options$help <- NULL
+    names(options) <- chartr("-", ".", names(options))
+  } else {
+    optparse::print_help(optionparser)
+    quit("no", 1L)
   }
 
 }
