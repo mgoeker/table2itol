@@ -118,6 +118,10 @@ if (length(find.package("optparse", NULL, TRUE))) {
         "[default: %default]"),
       metavar = "INTEGER", default = 1L),
 
+    optparse::make_option(opt_str = c("-q", "--quote"), type = "character",
+      help = paste0("Quote character for CSV-like files [default: %default]"),
+      metavar = "CHARACTER", default = "\""),
+
     optparse::make_option(c("-r", "--restrict"), type = "character",
       help = paste0("How to select from numeric values that yield branch ",
         "symbols [default: %default]"),
@@ -140,7 +144,7 @@ if (length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.7.1",
+  %prog: converting spreadsheet files to iTOL input, version 2.8.0",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -220,9 +224,10 @@ create_itol_files(infiles)
 create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     background = "", identifier2 = "", directory = ".", colour.file = "",
     gradient.file = "", separator = "\t", na.strings = paste0(c("", "(null)",
-      "NA"), collapse = separator), abort = FALSE, conversion = "none",
-    double.to.bars = FALSE, emblems = "", template = "%s", max.size = 20L,
-    favour = 1, width = 0.5, precision = 1L, restrict = "", opacity = 1) {
+      "NA"), collapse = separator), quote = "\"", abort = FALSE,
+    conversion = "none", double.to.bars = FALSE, emblems = "", template = "%s",
+    max.size = 20L, favour = 1, width = 0.5, precision = 1L, restrict = "",
+    opacity = 1) {
 
 
   OLDOPT <- options(warn = 1L)
@@ -534,7 +539,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # for Excel and Libreoffice/Openoffice files, respectively.  Must ensure
   # character vectors are converted to factors.
   #
-  read_file <- function(file, sep, na) {
+  read_file <- function(file, sep, na, quote) {
 
     read_xl <- function(sheet, path, na) {
       # for some reason read_excel() yields a 'tibble' instead of a data frame,
@@ -572,9 +577,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       xls =,
       xlsx = lapply(lapply(lapply(readxl::excel_sheets(file),
         read_xl, file, na), rescue_integers), rescue_factors),
-      list(read.table(file = file, header = TRUE, sep = sep, quote = "\"",
-        na.strings = na, fill = FALSE, stringsAsFactors = TRUE,
-        dec = ".", check.names = FALSE, comment.char = ""))
+      list(read.table(file = file, header = TRUE, sep = sep, quote = quote,
+        na.strings = na, fill = FALSE, stringsAsFactors = TRUE, dec = ".",
+        check.names = FALSE, comment.char = ""))
     )
 
   }
@@ -1250,7 +1255,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     klass <- vapply(x, class, "")
 
     # join all remaining columns in a matrix when applicable
-    if (all(duplicated.default(klass)[-1L]))
+    if (length(klass) > 1L && all(duplicated.default(klass)[-1L]))
       switch(
         EXPR = klass[[1L]],
         integer =,
@@ -1296,12 +1301,12 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
   for (infile in infiles)
     # note that read_file() is supposed to return a list of data frames
-    lapply(X = read_file(infile, separator, na.strings), FUN = itol_files,
-      bcol = background, precision = precision, lcol = label, icol = identifier,
-      scol = emblems, idpat = template, maxsize = max.size, favour = favour,
+    lapply(X = read_file(infile, separator, na.strings, quote),
+      FUN = itol_files, bcol = background, precision = precision, lcol = label,
+      icol = identifier, scol = emblems, idpat = template, maxsize = max.size,
+      favour = favour, strict = abort, jcol = identifier2, borwid = width,
       outdir = if (nzchar(directory)) directory else dirname(infile),
-      strict = abort, jcol = identifier2, borwid = width, restrict = restrict,
-      convint = conversion, convdbl = double.to.bars)
+      restrict = restrict, convint = conversion, convdbl = double.to.bars)
 
   invisible(NULL)
 

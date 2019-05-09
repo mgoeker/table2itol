@@ -1,6 +1,6 @@
 Usage: table2itol.R [options] file1 file2 ...
 
-  table2itol.R: converting spreadsheet files to iTOL input, version 2.7.1
+  table2itol.R: converting spreadsheet files to iTOL input, version 2.8.0
 
 Options:
 	-a, --abort
@@ -53,6 +53,9 @@ Options:
 
 	-p INTEGER, --precision=INTEGER
 		Number of decimal points used in the gradient legends [default: 1]
+
+	-q CHARACTER, --quote=CHARACTER
+		Quote character for CSV-like files [default: "]
 
 	-r TEXT/NUMBER, --restrict=TEXT/NUMBER
 		How to select from numeric values that yield branch symbols [default: ]
