@@ -144,7 +144,7 @@ if (length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.8.0",
+  %prog: converting spreadsheet files to iTOL input, version 2.8.1",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -196,7 +196,7 @@ create_itol_files(infiles)
 
 } else if (is.null(optionparser)) {
 
-  message("ERROR: need optparse package in interactive mode")
+  message("ERROR: need optparse package in non-interactive mode")
   quit("no", 1L)
 
 } else {
