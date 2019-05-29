@@ -144,7 +144,7 @@ if (length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.8.1",
+  %prog: converting spreadsheet files to iTOL input, version 2.8.2",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -570,10 +570,10 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
     switch(
       EXPR = tolower(tools::file_ext(file)),
-      ods = lapply(lapply(X = readODS::ods_sheets(file), path = file,
+      ods = lapply(lapply(lapply(X = readODS::ods_sheets(file), path = file,
         FUN = readODS::read_ods, na = na[[1L]], col_names = TRUE,
         col_types = NULL, formula_as_formula = FALSE, skip = 0L, range = NULL),
-        rescue_factors),
+        rescue_integers), rescue_factors),
       xls =,
       xlsx = lapply(lapply(lapply(readxl::excel_sheets(file),
         read_xl, file, na), rescue_integers), rescue_factors),
