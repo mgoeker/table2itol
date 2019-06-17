@@ -1,6 +1,6 @@
 Usage: table2itol.R [options] file1 file2 ...
 
-  table2itol.R: converting spreadsheet files to iTOL input, version 2.8.2
+  table2itol.R: converting spreadsheet files to iTOL input, version 2.8.3
 
 Options:
 	-a, --abort
@@ -67,7 +67,7 @@ Options:
 		Template for sprintf function to convert ID column when deviating from tip labels [default: %s]
 
 	-w NUMBER, --width=NUMBER
-		Border with used for domains, colour strips etc. [default: 0.5]
+		Border width used for domains, colour strips etc. [default: 0.5]
 
 
 FREQUENTLY NEEDED OPTIONS:

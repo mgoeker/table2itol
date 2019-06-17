@@ -138,13 +138,13 @@ if (length(find.package("optparse", NULL, TRUE))) {
       metavar = "PATTERN", default = "%s"),
 
     optparse::make_option(opt_str = c("-w", "--width"), type = "numeric",
-      help = paste0("Border with used for domains, colour strips etc. ",
+      help = paste0("Border width used for domains, colour strips etc. ",
         "[default: %default]"),
       metavar = "NUMBER", default = 0.5)
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.8.2",
+  %prog: converting spreadsheet files to iTOL input, version 2.9",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -994,7 +994,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       cutoff, restriction, ...) {
     coordinated_na_removal(x, ids)
     annotation <- list(DATASET_LABEL = name, MARGIN = 5, COLOR = "#bebada")
-    mask <- mask_if_requested(x, cutoff, restriction)
+    mask <- mask_if_requested(x, cutoff, tolower(restriction))
     if (any(mask)) {
       x[mask] <- NA_real_
       coordinated_na_removal(x, ids)
@@ -1026,21 +1026,33 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   emit_branch_annotation_numeric <- function(x, ids, name, outdir, branchpos,
       cutoff, restriction, symbol, endcolor, maxsize, precision, ...) {
     coordinated_na_removal(x, ids)
+    legendcolors <- c(LIGHTGREY, endcolor)
+    if (grepl("[A-Z]", restriction, FALSE, TRUE)) {
+      mask <- mask_if_requested(x, cutoff, tolower(restriction))
+      if (any(mask)) {
+        x[mask] <- NA_real_
+        xclrs <- plotrix::color.scale(x = x[!is.na(x)], extremes = legendcolors)
+        coordinated_na_removal(x, xclrs, ids)
+      } else {
+        xclrs <- plotrix::color.scale(x = x, extremes = legendcolors)
+      }
+    } else {
+      xclrs <- plotrix::color.scale(x = x, extremes = legendcolors)
+      mask <- mask_if_requested(x, cutoff, restriction)
+      if (any(mask)) {
+        x[mask] <- NA_real_
+        coordinated_na_removal(x, xclrs, ids)
+      }
+    }
     annotation <- list(
       COLOR = endcolor,
       DATASET_LABEL = name,
       LEGEND_TITLE = pretty_str(name),
       LEGEND_SHAPES = c(symbol, symbol),
-      LEGEND_COLORS = c(LIGHTGREY, endcolor),
+      LEGEND_COLORS = legendcolors,
       LEGEND_LABELS = legend_range(x, precision),
       MAXIMUM_SIZE = maxsize
     )
-    xclrs <- plotrix::color.scale(x = x, extremes = annotation$LEGEND_COLORS)
-    mask <- mask_if_requested(x, cutoff, restriction)
-    if (any(mask)) {
-      x[mask] <- NA_real_
-      coordinated_na_removal(x, xclrs, ids)
-    }
     print_itol(outdir, "branchsymbols", annotation,
       # columns: ID, symbol, size, colour, fill, position
       ids, symbol, maxsize, xclrs, 1L, branchpos)
