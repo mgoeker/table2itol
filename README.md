@@ -258,11 +258,25 @@ earlier ones, the script stops with an informative error message.
 #### How can I install the required R packages?
 
 There are several ways to obtain, install and update R packages. From within R,
-we found the following approach to be convenient:
+we originally found the following approach to be convenient:
 
 ```R
 source("http://bioconductor.org/biocLite.R")
 biocLite(c("optparse", "plotrix", "readODS", "readxl", "yaml"))
+```
+
+With R version 3.5 or greater one would instead use:
+
+```R
+if (!requireNamespace(package = "BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c("optparse", "plotrix", "readODS", "readxl", "yaml"))
+```
+
+But it should also be possible to run:
+
+```R
+install.packages(c("optparse", "plotrix", "readODS", "readxl", "yaml"))
 ```
 
 This should under normal circumstances install or update all R packages
