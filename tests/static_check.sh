@@ -97,6 +97,7 @@ ______EOF
 
   rm -f "$tmpfile"
 
+  # shellcheck disable=SC2086
   [ $errs -gt 0 ] && return 1 || return 0
 }
 

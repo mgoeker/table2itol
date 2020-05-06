@@ -100,6 +100,7 @@ function check_outdir
 
   done < "$@"
 
+  # shellcheck disable=SC2086
   [ $errors -gt 0 ] && return 1 || return 0
 
 }

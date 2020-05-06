@@ -1059,6 +1059,18 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
+  # Helper function for fix_column_types. Only accepts dates in the canonical
+  # format.
+  #
+  character2timediff <- function(x) {
+    present <- !is.na(x) & nzchar(x)
+    result <- as.Date(x, "%Y-%m-%d")
+    if (sum(is.na(result[present])) * 2L > length(result[present]))
+      return(NULL)
+    as.double(result - min(result, na.rm = TRUE) + 1L)
+  }
+
+
   # Useful when R does not get the type right because of special notations;
   # also for user-defined type modifications.
   #
@@ -1088,7 +1100,8 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       for (i in which(vapply(x, is.double, NA)))
         class(x[, i]) <- "pseudointeger"
 
-    # convert integers and logical vectors to other data types if requested
+    # convert integers and logical vectors to other data types if requested;
+    # convert factors that look like dates to to double vectors if requested
     switch(
       EXPR = convint,
       keep = NULL,
@@ -1106,6 +1119,11 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
           storage.mode(x[, i]) <- "double"
         for (i in which(vapply(x, is.logical, NA)))
           x[is.na(x[, i]), i] <- FALSE
+        for (i in which(vapply(x, is.factor, NA))) {
+          timediff <- character2timediff(as.character(x[, i]))
+          if (length(timediff))
+            x[, i] <- timediff
+        }
       },
       stop(sprintf("invalid integer/logical vector conversion indicator '%s'",
         convint))
