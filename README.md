@@ -383,3 +383,13 @@ annotations. While `--identifier` must not be `NA`, `--identifier2` can be `NA`.
 The pair of identifiers then specifies a tip, literally provided in the
 `--identifier` column. If both `--identifier` and `--identifier2` are not `NA`
 the pair specifies a branch.
+
+#### How can I better display dates?
+
+Dates are converted to numbers with decimal points if `--conversion double` is
+used. Such a gradient would then represent the number of the day. The lowest
+date encountered in the data would be set to day 1. Note that this only works if
+the canonical date format, e.g. `2015-08-30`, is used (if at least half of the
+non-missing values in some column can be parsed as `%Y-%m-%d` the column is
+accepted as representing dates). For the display of numbers with decimal points
+see above (options `--double-to-bars` and `--precision`).
