@@ -1,6 +1,6 @@
 Usage: table2itol.R [options] file1 file2 ...
 
-  table2itol.R: converting spreadsheet files to iTOL input, version 2.9
+  table2itol.R: converting spreadsheet files to iTOL input, version 2.11
 
 Options:
 	-a, --abort

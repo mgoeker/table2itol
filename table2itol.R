@@ -981,10 +981,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
-  # Not yet implemented.
+  # Vectors of class 'factor' yield instructions for naming subtrees.
   #
   emit_branch_annotation_factor <- function(x, ids, name, outdir, ...) {
-    #message(sprintf("Skipping column '%s' of mode 'factor' ...", name))
     coordinated_na_removal(x, ids)
     print_itol(outdir, "labels", name, ids, as.character(x))
   }
@@ -1007,14 +1006,14 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
-  # Should not occur in input.
+  # Should not normally occur in input.
   #
   emit_branch_annotation_list <- function(x, ids, name, outdir, ...) {
     message(sprintf("Skipping column '%s' of mode 'list' ...", name))
   }
 
 
-  # Vectors of class 'logical' select subtrees to be collapsed.
+  # Vectors of class 'logical' select instructions for collpasing subtrees.
   #
   emit_branch_annotation_logical <- function(x, ids, name, outdir, ...) {
     x[is.na(x)] <- FALSE
