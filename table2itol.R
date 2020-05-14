@@ -286,13 +286,13 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # Colour vectors collected by Jan P. Meier-Kolthoff.
   #
   COLOURS <- list(
-    # Dark2; colorblind-safe
+    # Dark2; colour-blind-safe
     JMK01 = "#1b9e77",
-    # Dark2; colorblind-safe
+    # Dark2; colour-blind-safe
     JMK02 = c("#d95f02", "#1b9e77"),
-    # Dark2; colorblind-safe
+    # Dark2; colour-blind-safe
     JMK03 = c("#1b9e77", "#d95f02", "#7570b3"),
-    # 4-class Paired; colorblind-safe
+    # 4-class Paired; colour-blind-safe
     JMK04 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"),
     # 5-class Accent; print-friendly
     JMK05 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
@@ -320,7 +320,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     JMK12 = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
       "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
       "#ffff99", "#b15928"),
-    ## from here on: iwanthue (all colors, hard)
+    ## from here on: iwanthue (all colours, hard)
     JMK13 = c("#8393c7", "#8ad256", "#6a49c5", "#d2b351",
       "#cb55c3", "#4d4040", "#c4527c", "#57743d", "#d85439", "#7accb1",
       "#925136", "#ceb2ab", "#512f67"),
@@ -810,7 +810,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
     if (size > maxclrs * length(SYMBOLS)) {
 
-      # additional columns: position, color, style, size_factor, rotation
+      # additional columns: position, colour, style, size_factor, rotation
       print_itol(outdir, "text", annot1, ids, x,
         -1, BLACK, "normal", 0.75, 0)
 
@@ -846,7 +846,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
       annotation <- c(annot1, list(
         BACKBONE_HEIGHT = 0, # controls the height of the midline
-        BACKBONE_COLOR = WHITE, # controls the color of the midline
+        BACKBONE_COLOR = WHITE, # controls the colour of the midline
         # we are hiding it by drawing it white
         BORDER_WIDTH = borwid,
         HEIGHT_FACTOR = 1,
@@ -1000,7 +1000,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       x[mask] <- NA_real_
       coordinated_na_removal(x, ids)
     }
-    # additional columns: position, color, style, size_factor, rotation
+    # additional columns: position, colour, style, size_factor, rotation
     print_itol(outdir, "text", annotation, ids, x,
       branchpos, BLACK, "normal", 0.75, 0)
   }
@@ -1013,7 +1013,8 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
-  # Vectors of class 'logical' select instructions for collpasing subtrees.
+  # Vectors of class 'logical' select rows for the generation of instructions
+  # for collapsing subtrees.
   #
   emit_branch_annotation_logical <- function(x, ids, name, outdir, ...) {
     x[is.na(x)] <- FALSE
