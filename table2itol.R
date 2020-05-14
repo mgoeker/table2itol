@@ -144,7 +144,7 @@ if (length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.9",
+  %prog: converting spreadsheet files to iTOL input, version 2.11",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -984,7 +984,9 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # Not yet implemented.
   #
   emit_branch_annotation_factor <- function(x, ids, name, outdir, ...) {
-    message(sprintf("Skipping column '%s' of mode 'factor' ...", name))
+    #message(sprintf("Skipping column '%s' of mode 'factor' ...", name))
+    coordinated_na_removal(x, ids)
+    print_itol(outdir, "labels", name, ids, as.character(x))
   }
 
 

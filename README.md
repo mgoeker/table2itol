@@ -376,13 +376,21 @@ Like all branch annotations, collapsing instructions are generating if both
 identifies a node/branch in a rooted tree which corresponds to the most recent
 common ancestor of the two tips. The arguments of `--identifier` and
 `--identifier2` must identify the two columns which contain the pairs of tip
-labels. Logical vectors will then yield subtree collapsing instructions.
+labels. Logical vectors will then yield subtree collapsing instructions for
+those rows that contain a `TRUE` value.
 
 The `tests/INPUT` folder contains an example file for specifying branch
 annotations. While `--identifier` must not be `NA`, `--identifier2` can be `NA`.
 The pair of identifiers then specifies a tip, literally provided in the
 `--identifier` column. If both `--identifier` and `--identifier2` are not `NA`
 the pair specifies a branch.
+
+#### How can I generate iTOL instructions for naming subtrees?
+
+This works like generating collapsing instructions as described above but with a
+factor instead of a logical vector. Each row that does not contain a `NA` value
+will then yield a subtree naming instruction. The `tests/INPUT` folder contains
+an according example file.
 
 #### How can I better display dates?
 
