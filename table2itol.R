@@ -63,7 +63,8 @@ if (length(find.package("optparse", NULL, TRUE))) {
       metavar = "DIR", default = "."),
 
     optparse::make_option(opt_str = c("-e", "--emblems"), type = "character",
-      help = paste0("Column to define symbol assignments; ignored if empty ",
+      help = paste0("Column to define symbol assignments (default) or ",
+        "the selection of rows for output (--identifier2); ignored if empty ",
         "[default: %default]"),
       metavar = "NAME", default = ""),
 
@@ -144,7 +145,7 @@ if (length(find.package("optparse", NULL, TRUE))) {
 
   ), add_help_option = FALSE, prog = "table2itol.R",
   usage = "%prog [options] file1 file2 ...", description = "
-  %prog: converting spreadsheet files to iTOL input, version 2.11",
+  %prog: converting spreadsheet files to iTOL input, version 2.12",
   epilogue = "
 FREQUENTLY NEEDED OPTIONS:
 
@@ -525,7 +526,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # For input of user-defined colour vectors.
   #
   read_colour_vectors <- function(file, upto) {
-    if (!nzchar(file))
+    if (!nzchar(file, FALSE))
       return(NULL)
     x <- yaml::yaml.load_file(file)
     if (!is.list(x))
@@ -1065,7 +1066,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   # format.
   #
   character2timediff <- function(x) {
-    present <- !is.na(x) & nzchar(x)
+    present <- !is.na(x) & nzchar(x, TRUE)
     result <- as.Date(x, "%Y-%m-%d")
     if (sum(is.na(result[present])) * 2L > length(result[present]))
       return(NULL)
@@ -1169,12 +1170,27 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
+  # Helper function for branch_annotation_files().
+  #
+  force_logical <- function(x) {
+    result <- switch(
+      EXPR = class(x),
+      logical = x,
+      factor = nzchar(as.character(x), TRUE),
+      character = nzchar(x, TRUE),
+      list = lengths(x) > 0L,
+      as.logical(x)
+    )
+    result[is.na(result)] <- FALSE
+    result
+  }
+
   # Called by itol_files() instead of jumping to the main branch.
   #
-  branch_annotation_files <- function(x, icol, jcol, idpat, precision, outdir,
-      maxsize, restrict) {
+  branch_annotation_files <- function(x, icol, jcol, scol, idpat, precision,
+    outdir, strict, maxsize, restrict) {
 
-    if (nzchar(restrict)) {
+    if (nzchar(restrict, FALSE)) {
       cutoff <- as.double(basename(restrict))
       restriction <- dirname(restrict)
       if (restriction == ".") # when only a number was provided
@@ -1186,6 +1202,13 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
     idpos <- get_col(icol, x, TRUE)
     jpos <- get_col(jcol, x, TRUE)
+
+    if (length(scol) && all(nzchar(scol, FALSE))) {
+      spos <- get_col(scol, x, strict)
+      if (spos)
+        x <- x[force_logical(x[, spos]), , drop = FALSE]
+    }
+
     assert_no_forbidden_character("|", x[, idpos], x[, jpos])
     icol <- ifelse(is.na(x[, jpos]), sprintf(idpat, x[, idpos]),
       paste(sprintf(idpat, x[, idpos]), sprintf(idpat, x[, jpos]), sep = "|"))
@@ -1238,10 +1261,10 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       dir.create(outdir)
 
     # generate branch symbols, skip normal run
-    if (length(jcol) && all(nzchar(jcol)))
+    if (length(jcol) && all(nzchar(jcol, FALSE)))
       return(branch_annotation_files(x = x, icol = icol, jcol = jcol,
-        idpat = idpat, precision = precision, outdir = outdir,
-        maxsize = maxsize, restrict = restrict))
+        scol = scol, idpat = idpat, precision = precision, outdir = outdir,
+        strict = strict, maxsize = maxsize, restrict = restrict))
 
     # identifier column (mandatory in strict mode), step 2
     icol <- x[, idpos]
@@ -1256,7 +1279,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
         name = names(x)[[lpos]], outdir = outdir)
 
     # background colour column (optional in strict mode)
-    if (length(bcol) && all(nzchar(bcol))) {
+    if (length(bcol) && all(nzchar(bcol, FALSE))) {
       cpos <- get_col(bcol, x, strict)
       if (cpos)
         emit_itol_labelcolors(x = x[, cpos], ids = icol,
@@ -1267,7 +1290,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
     # symbol-defining column (optional in strict mode)
     symbols <- NULL
-    if (length(scol) && all(nzchar(scol))) {
+    if (length(scol) && all(nzchar(scol, FALSE))) {
       spos <- get_col(scol, x, strict)
       if (spos) {
         symbols <- x[, spos]
@@ -1337,7 +1360,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       FUN = itol_files, bcol = background, precision = precision, lcol = label,
       icol = identifier, scol = emblems, idpat = template, maxsize = max.size,
       favour = favour, strict = abort, jcol = identifier2, borwid = width,
-      outdir = if (nzchar(directory)) directory else dirname(infile),
+      outdir = if (nzchar(directory, FALSE)) directory else dirname(infile),
       restrict = restrict, convint = conversion, convdbl = double.to.bars)
 
   invisible(NULL)

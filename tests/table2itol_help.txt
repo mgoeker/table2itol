@@ -1,6 +1,6 @@
 Usage: table2itol.R [options] file1 file2 ...
 
-  table2itol.R: converting spreadsheet files to iTOL input, version 2.11
+  table2itol.R: converting spreadsheet files to iTOL input, version 2.12
 
 Options:
 	-a, --abort
@@ -22,7 +22,7 @@ Options:
 		Place output files in this directory ('.' means working directory, empty means input file directory) [default: .]
 
 	-e NAME, --emblems=NAME
-		Column to define symbol assignments; ignored if empty [default: ]
+		Column to define symbol assignments (default) or the selection of rows for output (--identifier2); ignored if empty [default: ]
 
 	-f NUMBER, --favour=NUMBER
 		Numeric factor for favouring colours over symbols (higher => more colours relative to symbols) [default: 1]

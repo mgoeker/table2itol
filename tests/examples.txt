@@ -8,3 +8,4 @@
 ../table2itol.R -a -d -c none -D G008 -b continent\ of\ isolation\  -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.xlsx
 ../table2itol.R -a -o 0.5 -G INPUT/colours_1.yml -c double -D G009 -i TID -l final\ label -t %s -w 0.5 INPUT/example_001.ods
 ../table2itol.R -c keep -D G010 -i ID -t %s INPUT/example_002.tsv
+../table2itol.R -D G011 -i Left -j Right -e Name INPUT/branch_annotation_1.tsv
