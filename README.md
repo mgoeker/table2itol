@@ -389,8 +389,13 @@ the pair specifies a branch.
 
 This works like generating collapsing instructions as described above but with a
 factor instead of a logical vector. Each row that does not contain a `NA` value
-will then yield a subtree naming instruction. The `tests/INPUT` folder contains
+will then yield a subtree naming instruction.  The `tests/INPUT` folder contains
 an according example file.
+
+To additionally prevent rows from being included in the output, use `--emblems`
+to choose a column that indicates the rows to be considered. Empty character
+strings, `NA` and `FALSE` values in that column cause the respective row to be
+deleted. The `tests/INPUT` folder contains an according example file.
 
 #### How can I better display dates?
 
